@@ -4,7 +4,7 @@
         <TargetFramework>netstandard2.0</TargetFramework>
         <OutputType>Library</OutputType>
         <LangVersion>8</LangVersion>
-        <Nullable>disable</Nullable>
+        <Nullable>enable</Nullable>
         <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
         <LocalRefsDir Condition="Exists('..\Refs')">..\Refs</LocalRefsDir>
         <BeatSaberDir>$(LocalRefsDir)</BeatSaberDir>
@@ -37,8 +37,16 @@
     </PropertyGroup>
 
     <ItemGroup>
+        <Reference Include="BeatmapCore">
+          <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\BeatmapCore.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
+        <Reference Include="GameplayCore">
+          <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\GameplayCore.dll</HintPath>
+          <Private>False</Private>
+        </Reference>
         <Reference Include="HMRendering">
-          <HintPath>$(BeatSaberDir)\\Beat Saber_Data\Managed\HMRendering.dll</HintPath>
+          <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\HMRendering.dll</HintPath>
           <Private>False</Private>
         </Reference>
         <Reference Include="MediaLoader">
@@ -46,7 +54,7 @@
           <Private>False</Private>
         </Reference>
         <Reference Include="Rendering">
-          <HintPath>$(BeatSaberDir)\\Beat Saber_Data\Managed\Rendering.dll</HintPath>
+          <HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Rendering.dll</HintPath>
           <Private>False</Private>
         </Reference>
         <Reference Include="SemVer">
