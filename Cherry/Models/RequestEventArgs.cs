@@ -9,5 +9,15 @@ namespace Cherry.Models
         public IRequester Requester { get; } = null!;
         public BeatmapDifficulty? Difficulty { get; }
         public GameplayModifierMask? Modifiers { get; }
+        public int Priority { get; }
+
+        public RequestEventArgs(string key, IRequester requester, BeatmapDifficulty? difficulty = null, GameplayModifierMask? modifiers = null, int? priority = null)
+        {
+            Key = key;
+            Requester = requester;
+            Difficulty = difficulty;
+            Modifiers = modifiers;
+            Priority = priority ?? 0;
+        }
     }
 }
