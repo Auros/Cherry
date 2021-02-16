@@ -7,5 +7,11 @@ namespace Cherry.Models
     {
         public string Key { get; } = null!;
         public IRequester Requester { get; } = null!;
+
+        public CancelEventArgs(string key, IRequester requester)
+        {
+            Key = key;
+            Requester = requester;
+        }
     }
 }
