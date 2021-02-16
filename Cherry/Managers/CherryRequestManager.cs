@@ -34,7 +34,7 @@ namespace Cherry.Managers
 
         private void SongCancelled(object sender, CancelEventArgs e)
         {
-            RequestCancelled?.Invoke(sender, e);
+            MainThreadInvoker.Invoke(() => RequestCancelled?.Invoke(sender, e));
         }
 
         private async Task RequestReceivedAsync(object sender, RequestEventArgs e)
@@ -45,7 +45,7 @@ namespace Cherry.Managers
 
                 return;
             }
-            SongRequested?.Invoke(sender, e);
+            MainThreadInvoker.Invoke(() => SongRequested?.Invoke(sender, e));
             _siraLog.Debug($"{map.Value.Name} has been requested by {e.Requester.Username}.");
         }
 
