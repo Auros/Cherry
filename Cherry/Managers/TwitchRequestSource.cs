@@ -106,9 +106,9 @@ namespace Cherry.Managers
                 if (_lazyTinyRequestCache.TryGetValue(message.Sender.Id, out RequestEventArgs request))
                 {
                     CancelEventArgs args = new CancelEventArgs(request.Key, request.Requester);
+                    SendMessage(message.Channel, $"Removed {request.Key} from the queue.");
                     _lazyTinyRequestCache.Remove(message.Sender.Id);
                     RequestCancelled?.Invoke(message.Channel, args);
-                    SendMessage(message.Channel, $"Removed {request.Key} from the queue.");
                 }
             }
         }
