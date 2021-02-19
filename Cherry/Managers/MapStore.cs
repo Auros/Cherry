@@ -1,5 +1,7 @@
 ﻿using Cherry.Models;
+using IPA.Loader;
 using SiraUtil;
+using SiraUtil.Zenject;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,10 +13,11 @@ namespace Cherry.Managers
         private readonly SiraClient _siraClient;
         private readonly Dictionary<string, Map> _mapCache;
 
-        public MapStore(SiraClient siraClient)
+        public MapStore(SiraClient siraClient, UBinder<Plugin, PluginMetadata> metadataBinder)
         {
             _siraClient = siraClient;
             _mapCache = new Dictionary<string, Map>();
+            _siraClient.SetUserAgent(nameof(Cherry), metadataBinder.Value.Version);
         }
 
         public async Task<Map?> GetMapAsync(string key, CancellationToken? token = null)
