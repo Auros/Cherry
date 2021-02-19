@@ -1,6 +1,7 @@
 ﻿using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.Components;
 using BeatSaberMarkupLanguage.ViewControllers;
+using Cherry.Managers;
 using HMUI;
 using IPA.Utilities;
 using SiraUtil.Tools;
@@ -34,6 +35,7 @@ namespace Cherry.UI
         internal static readonly FieldAccessor<CustomListTableData, LevelListTableCell>.Accessor CellInstance = FieldAccessor<CustomListTableData, LevelListTableCell>.GetAccessor("songListTableCellInstance");
 
         private SiraLog _siraLog = null!;
+        private WebImageAsyncLoader _webImageAsyncLoader = null!;
 
         [UIValue("detail-view")]
         private RequestDetailView _requestDetailView = null!;
@@ -42,9 +44,10 @@ namespace Cherry.UI
         private RequestPanelView _requestPanelView = null!;
 
         [Inject]
-        protected void Construct(SiraLog siraLog, DiContainer container)
+        protected void Construct(SiraLog siraLog, DiContainer container, WebImageAsyncLoader webImageAsyncLoader)
         {
             _siraLog = siraLog;
+            _webImageAsyncLoader = webImageAsyncLoader;
             _requestDetailView = container.Instantiate<RequestDetailView>();
             _requestPanelView = container.InstantiateComponent<RequestPanelView>(gameObject);
         }
