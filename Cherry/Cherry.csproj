@@ -38,6 +38,7 @@
 
     <ItemGroup>
       <None Remove="Resources\cherry.png" />
+      <None Remove="Views\request-view.bsml" />
     </ItemGroup>
 
     <ItemGroup>
@@ -146,6 +147,7 @@
     <ItemGroup>
         <EmbeddedResource Include="manifest.json" />
         <EmbeddedResource Include="Resources\cherry.png" />
+        <EmbeddedResource Include="Views\request-view.bsml" />
     </ItemGroup>
 
     <ItemGroup>	

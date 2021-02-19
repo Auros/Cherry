@@ -1,0 +1,51 @@
+﻿<bg horizontal-fit="PreferredSize" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd">
+  <!--<text text="♥ Koala ♥" align="Center" font-size="10" />-->
+  <horizontal horizontal-fit="PreferredSize" spacing="4">
+    <vertical vertical-fit="PreferredSize" pref-width="64">
+      <horizontal id="top-panel" pad-left="2" bg="panel-top-gradient" pref-height="8">
+        <text text="Request Queue" align="Center" font-size="7" bold="true" />
+      </horizontal>
+      <vertical vertical-fit="PreferredSize" bg="round-rect-panel" bg-color="grey" pad="2">
+        <action-button id="up-button" text="▲" pref-width="58.5" pref-height="8" italics="false" />
+        <list id="request-list" visible-cells="6"  />
+        <action-button id="down-button" text="▼" pref-width="58.5" pref-height="8" italics="false" />
+      </vertical>
+    </vertical>
+    <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="64" pref-height="70">
+      <macro.as-host host="detail-view">
+        <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="64" pref-height="26.5">
+          <horizontal horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="64" pref-height="20">
+            <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="20">
+              <image id="cover-image" preserve-aspect="true" pref-width="20" />
+            </vertical>
+            <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="42" pref-height="18">
+              <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="42" pref-height="12">
+                <text id="title-text" text="" font-size="4.5" />
+              </vertical>
+              <text id="uploader-text" text="" font-size="3" />
+              <text id="requester-text" text="" font-size="3" />
+            </vertical>
+          </horizontal>
+          <horizontal horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="64">
+            <button id="requester-button" text="Requester" pref-width="27" />
+            <button id="suggestions-button" text="Suggestions" pref-width="27" />
+            <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="8" pref-height="5" >
+              <text id="rating-text" font-size="3" />
+              <text id="time-text" font-size="2" />
+            </vertical>
+          </horizontal>
+        </vertical>
+      </macro.as-host>
+      <macro.as-host host="panel-view">
+        <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="64" pref-height="25">
+          <horizontal horizontal-fit="Unconstrained">
+            <button id="queue-button" pref-width="20" pref-height="12" align="Center" italics="false" on-click="queue-button-clicked" />
+            <button id="history-button" text="History" pref-width="20" pref-height="12" align="Center" italics="false" on-click="history-button-clicked" />
+            <button id="settings-button" text="Settings" pref-width="20" pref-height="12" align="Center" italics="false" on-click="settings-button-clicked" />
+          </horizontal>
+          <action-button id="play-button" text="Play" pref-width="40" pref-height="13" italics="false" on-click="play-button-clicked" />
+        </vertical>
+      </macro.as-host>
+    </vertical>
+  </horizontal>
+</bg>

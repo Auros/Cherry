@@ -1,5 +1,4 @@
-﻿using BeatSaberMarkupLanguage;
-using BeatSaberMarkupLanguage.Components;
+﻿using BeatSaberMarkupLanguage.Components;
 using IPA.Loader;
 using SiraUtil.Zenject;
 using System;
@@ -61,7 +60,7 @@ namespace Cherry.UI
             await mrs.CopyToAsync(ms);
 
             _image.OnClickEvent += Clicked;
-            _image.sprite = Utilities.LoadSpriteRaw(ms.ToArray());
+            _image.sprite = BeatSaberMarkupLanguage.Utilities.LoadSpriteRaw(ms.ToArray());
             _image.sprite.texture.wrapMode = TextureWrapMode.Clamp;
         }
 
@@ -74,14 +73,13 @@ namespace Cherry.UI
         private void Clicked(PointerEventData _)
         {
             WasClicked?.Invoke();
-            Console.WriteLine("yep! yo.");
         }
 
         private ClickableImage CreateImage()
         {
             GameObject gameObject = new GameObject("ClickyCherryIcon");
             ClickableImage image = gameObject.AddComponent<ClickableImage>();
-            image.material = Utilities.ImageResources.NoGlowMat;
+            image.material = BeatSaberMarkupLanguage.Utilities.ImageResources.NoGlowMat;
 
             image.rectTransform.SetParent(_levelSelectionNavigationController.transform);
             image.rectTransform.localPosition = new Vector3(79f, 20f, 0f);

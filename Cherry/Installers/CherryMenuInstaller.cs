@@ -1,5 +1,6 @@
-﻿using Cherry.UI;
-using Zenject;
+﻿using Zenject;
+using SiraUtil;
+using Cherry.UI;
 
 namespace Cherry.Installers
 {
@@ -7,7 +8,9 @@ namespace Cherry.Installers
     {
         public override void InstallBindings()
         {
-            Container.BindInterfacesTo<ButtonManager>().AsSingle();
+            Container.BindInterfacesAndSelfTo<ButtonManager>().AsSingle();
+            Container.Bind<CherryRequestView>().FromNewComponentAsViewController().AsSingle();
+            Container.Bind<IInitializable>().To<CherryFlowCoordinator>().FromNewComponentOnNewGameObject(nameof(CherryFlowCoordinator)).AsSingle();
         }
     }
 }
