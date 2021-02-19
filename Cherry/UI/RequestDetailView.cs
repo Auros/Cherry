@@ -35,10 +35,16 @@ namespace Cherry.UI
         [UIComponent("time-text")]
         protected readonly CurvedTextMeshPro _timeText = null!;
 
+        [UIComponent("content-root")]
+        protected readonly RectTransform _contentRoot = null!;
+
+        [UIComponent("loading-root")]
+        protected readonly RectTransform _loadingRoot = null!;
+
         public event Action? RequesterButtonClicked;
 
         [UIAction("requester-button-clicked")] protected void RBC() => RequesterButtonClicked?.Invoke();
-        
+
         [UIAction("#post-parse")]
         protected void Parsed()
         {
@@ -62,6 +68,9 @@ namespace Cherry.UI
 
         public void SetData(string songName, string uploaderName, string requesterName, Sprite imageCover, float rating, DateTime time, string? suggestions = null)
         {
+            _contentRoot.gameObject.SetActive(true);
+            _loadingRoot.gameObject.SetActive(false);
+
             _titleText.text = songName;
             _uploaderText.text = uploaderName;
             _requesterText.text = $"requested by <color=#919191>{requesterName}</color>";
@@ -70,6 +79,12 @@ namespace Cherry.UI
             _ratingText.text = string.Format("{0:0%}", rating);
             _ratingText.color = Utilities.Evaluate(rating);
             _timeText.text = time.ToString("h:mm tt");
+        }
+
+        public void SetLoading()
+        {
+            _contentRoot.gameObject.SetActive(false);
+            _loadingRoot.gameObject.SetActive(true);
         }
     }
 }
