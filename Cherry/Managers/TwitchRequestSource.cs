@@ -89,7 +89,7 @@ namespace Cherry.Managers
                     elevationLevel = Power.Level1;
 
                 TwitchRequester requester = new TwitchRequester(message.Sender.Id, message.Sender.UserName, elevationLevel);
-                RequestEventArgs args = new RequestEventArgs(key, requester);
+                RequestEventArgs args = new RequestEventArgs(key, requester, DateTime.Now);
                 SongRequested?.Invoke(message.Channel, args);
 
                 if (_lazyTinyRequestCache.ContainsKey(message.Sender.Id))
