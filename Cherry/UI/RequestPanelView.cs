@@ -93,6 +93,11 @@ namespace Cherry.UI
             _playButtonText.text = text;
         }
 
+        public void SetPlayButtonInteractability(bool interactability)
+        {
+            _playButton.interactable = interactability;
+        }
+
         public void SetPlayButtonColor(Color? color)
         {
             if (!color.HasValue)
@@ -134,6 +139,11 @@ namespace Cherry.UI
         {
             _queueButtonUnderline.color = color;
             _queueButtonUnderline.SetVerticesDirty();
+        }
+
+        public void SetSkipButtonInteractability(bool interactability)
+        {
+            _skipButton.interactable = interactability;
         }
     }
 }
