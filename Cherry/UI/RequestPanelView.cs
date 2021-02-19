@@ -17,8 +17,8 @@ namespace Cherry.UI
         [UIComponent("history-button")]
         protected readonly Button _historyButton = null!;
 
-        [UIComponent("settings-button")]
-        protected readonly Button _settingsButton = null!;
+        [UIComponent("skip-button")]
+        protected readonly Button _skipButton = null!;
 
         private ImageView _queueButtonUnderline = null!;
         private CurvedTextMeshPro _queueButtonText = null!;
@@ -34,9 +34,9 @@ namespace Cherry.UI
         private Color _defaultPlayButtonBGColorLeftBottom = Color.blue;
 
         public event Action? PlayButtonClicked;
+        public event Action? SkipButtonClicked;
         public event Action? QueueButtonClicked;
         public event Action? HistoryButtonClicked;
-        public event Action? SettingsButtonClicked;
 
         [UIAction("#post-parse")]
         protected void Parsed()
@@ -44,7 +44,7 @@ namespace Cherry.UI
             _playButton.SetSkew(0f);
             _queueButton.SetSkew(0f);
             _historyButton.SetSkew(0f);
-            _settingsButton.SetSkew(0f);
+            _skipButton.SetSkew(0f);
 
             _queueButtonText = _queueButton.GetComponentInChildren<CurvedTextMeshPro>();
             _queueButtonUnderline = _queueButton.transform.Find("Underline").GetComponent<ImageView>();
@@ -84,9 +84,9 @@ namespace Cherry.UI
         }
 
         [UIAction("play-button-clicked")] protected void PBC() => PlayButtonClicked?.Invoke();
+        [UIAction("skip-button-clicked")] protected void SBC() => SkipButtonClicked?.Invoke();
         [UIAction("queue-button-clicked")] protected void QBC() => QueueButtonClicked?.Invoke();
         [UIAction("history-button-clicked")] protected void HBC() => HistoryButtonClicked?.Invoke();
-        [UIAction("settings-button-clicked")] protected void SBC() => SettingsButtonClicked?.Invoke();
 
         public void SetPlayButtonText(string text)
         {

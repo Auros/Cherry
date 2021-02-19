@@ -40,8 +40,8 @@
         <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="64" pref-height="25">
           <horizontal horizontal-fit="Unconstrained">
             <button id="queue-button" pref-width="20" pref-height="12" align="Center" italics="false" on-click="queue-button-clicked" />
+            <button id="skip-button" text="Skip" pref-width="20" pref-height="12" align="Center" italics="false" on-click="skip-button-clicked" />
             <button id="history-button" text="History" pref-width="20" pref-height="12" align="Center" italics="false" on-click="history-button-clicked" />
-            <button id="settings-button" text="Settings" pref-width="20" pref-height="12" align="Center" italics="false" on-click="settings-button-clicked" />
           </horizontal>
           <action-button id="play-button" text="Play" pref-width="40" pref-height="13" italics="false" on-click="play-button-clicked" />
         </vertical>
