@@ -32,6 +32,9 @@ namespace Cherry.Models
         [JsonProperty("coverURL")]
         public string CoverURL { get; set; }
 
+        [JsonProperty("uploader")]
+        public User Uploader { get; set; }
+
         internal struct Metadata
         {
             [JsonProperty("levelAuthorName")]
@@ -96,6 +99,12 @@ namespace Cherry.Models
         {
             [JsonProperty("njs")]
             public float NJS { get; set; }
+        }
+
+        internal struct User
+        {
+            [JsonProperty("username")]
+            public string Name { get; set; }
         }
     }
 }

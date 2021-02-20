@@ -41,6 +41,7 @@ namespace Cherry.Managers
                     return sprite;
                 }
                 sprite = BeatSaberMarkupLanguage.Utilities.LoadSpriteRaw(imageBytes);
+                sprite.texture.wrapMode = TextureWrapMode.Clamp;
                 _spriteCache.Add(path, sprite);
                 return sprite;
             }

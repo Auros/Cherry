@@ -7,7 +7,7 @@
       </horizontal>
       <vertical vertical-fit="PreferredSize" bg="round-rect-panel" bg-color="grey" pad="2">
         <action-button id="up-button" text="▲" pref-width="58.5" pref-height="8" italics="false" />
-        <list id="request-list" visible-cells="6"  />
+        <list id="request-list" visible-cells="6" select-cell="selected-request"  />
         <action-button id="down-button" text="▼" pref-width="58.5" pref-height="8" italics="false" />
       </vertical>
     </vertical>
@@ -28,8 +28,8 @@
             </vertical>
           </horizontal>
           <horizontal horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="64">
-            <button id="requester-button" text="Requester" pref-width="27" />
-            <button id="suggestions-button" text="Suggestions" pref-width="27" />
+            <button id="requester-button" text="Requester" pref-width="27" italics="false" />
+            <button id="suggestions-button" text="Suggestions" pref-width="27" italics="false" />
             <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="8" pref-height="5" >
               <text id="rating-text" font-size="3" />
               <text id="time-text" font-size="2" />
