@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using System;
 
 namespace Cherry.Models
 {
@@ -22,8 +23,14 @@ namespace Cherry.Models
         [JsonProperty("hash")]
         public string Hash { get; set; }
 
+        [JsonProperty("uploaded")]
+        public DateTime Uploaded { get; set; }
+
         [JsonProperty("downloadURL")]
         public string DownloadURL { get; set; }
+
+        [JsonProperty("coverURL")]
+        public string CoverURL { get; set; }
 
         internal struct Metadata
         {

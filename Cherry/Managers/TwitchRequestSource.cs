@@ -90,7 +90,7 @@ namespace Cherry.Managers
 
                 TwitchRequester requester = new TwitchRequester(message.Sender.Id, message.Sender.UserName, elevationLevel);
                 RequestEventArgs args = new RequestEventArgs(key, requester, DateTime.Now);
-                SongRequested?.Invoke(message.Channel, args);
+                SongRequested?.Invoke(new TwitchSender(message.Channel, this), args);
 
                 if (_lazyTinyRequestCache.ContainsKey(message.Sender.Id))
                 {
@@ -106,9 +106,9 @@ namespace Cherry.Managers
                 if (_lazyTinyRequestCache.TryGetValue(message.Sender.Id, out RequestEventArgs request))
                 {
                     CancelEventArgs args = new CancelEventArgs(request.Key, request.Requester);
+                    RequestCancelled?.Invoke(new TwitchSender(message.Channel, this), args);
                     SendMessage(message.Channel, $"Removed {request.Key} from the queue.");
                     _lazyTinyRequestCache.Remove(message.Sender.Id);
-                    RequestCancelled?.Invoke(message.Channel, args);
                 }
             }
         }
@@ -128,6 +128,23 @@ namespace Cherry.Managers
             if (sender is IChatChannel channel)
             {
                 _twitchService?.SendTextMessage(message, channel);
+            }
+        }
+
+        private class TwitchSender : DynamicSender
+        {
+            private readonly IChatChannel _channel;
+            private readonly ICherryRequestSource _source;
+
+            public TwitchSender(IChatChannel channel, ICherryRequestSource source)
+            {
+                _source = source;
+                _channel = channel;
+            }
+            
+            public override void SendMessage(string text)
+            {
+                _source.SendMessage(_channel, text);
             }
         }
     }

@@ -13,16 +13,18 @@ namespace Cherry.Managers
     {
         private readonly SiraLog _siraLog;
         private readonly MapStore _mapStore;
+        private readonly List<IRequestFilter<Map>> _mapRequestFilters;
         private readonly List<ICherryRequestSource> _cherryRequestSource;
         private readonly CancellationTokenSource _cancellationTokenSource;
 
         public event EventHandler<RequestEventArgs>? SongRequested;
         public event EventHandler<CancelEventArgs>? RequestCancelled;
 
-        public CherryRequestManager(SiraLog siraLog, MapStore mapStore, List<ICherryRequestSource> cherryRequestSource)
+        public CherryRequestManager(SiraLog siraLog, MapStore mapStore, List<IRequestFilter<Map>> mapRequestFilters, List<ICherryRequestSource> cherryRequestSource)
         {
             _siraLog = siraLog;
             _mapStore = mapStore;
+            _mapRequestFilters = mapRequestFilters;
             _cherryRequestSource = cherryRequestSource;
             _cancellationTokenSource = new CancellationTokenSource();
         }
@@ -42,11 +44,26 @@ namespace Cherry.Managers
             Map? map = await _mapStore.GetMapAsync(e.Key);
             if (!map.HasValue)
             {
-
+                if (sender is DynamicSender callback)
+                {
+                    callback.SendMessage($"Map ({e.Key}) does not exist.");
+                }
                 return;
             }
-            MainThreadInvoker.Invoke(() => SongRequested?.Invoke(sender, e));
+            foreach (var filter in _mapRequestFilters)
+            {
+                FilterResult result = await filter.Resolve(map.Value, e);
+                if (!result.IsValid)
+                {
+                    if (result.Error != null && sender is DynamicSender callback)
+                    {
+                        callback.SendMessage(result.Error);
+                    }
+                    return;
+                }
+            }
             _siraLog.Debug($"{map.Value.Name} has been requested by {e.Requester.Username}.");
+            MainThreadInvoker.Invoke(() => SongRequested?.Invoke(sender, e));
         }
 
         public void Initialize()

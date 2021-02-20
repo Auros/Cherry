@@ -5,6 +5,7 @@ using Cherry.Managers;
 using HMUI;
 using IPA.Utilities;
 using SiraUtil.Tools;
+using System;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
@@ -14,7 +15,7 @@ namespace Cherry.UI
 {
     [ViewDefinition("Cherry.Views.request-view.bsml")]
     [HotReload(RelativePathToLayout = @"..\Views\request-view.bsml")]
-    internal class CherryRequestView : BSMLAutomaticViewController
+    internal class CherryRequestView : BSMLAutomaticViewController, IDisposable
     {
         [UIComponent("up-button")]
         protected readonly Button upButton = null!;
@@ -53,11 +54,10 @@ namespace Cherry.UI
         }
 
         [UIAction("#post-parse")]
-        protected async Task Parsed()
+        protected void Parsed()
         {
             PageUpButton(ref requestList.tableView) = upButton;
             PageDownButton(ref requestList.tableView) = downButton;
-
             var list = requestList;
             var inst = CellInstance(ref list);
             if (inst == null)
@@ -66,18 +66,14 @@ namespace Cherry.UI
             var cellBackground = (bg as ImageView)!;
             ImageSkew(ref cellBackground) = 0f;
             cellBackground.SetVerticesDirty();
-
             upButton.SetSkew(0f);
             downButton.SetSkew(0f);
-
             ImageView topBackground = (topPanelBackground.background as ImageView)!;
             ImageSkew(ref topBackground) = 0f;
             topBackground.color = Color.white;
             topBackground.color0 = new Color(0.217f, 0.782f, 0f);
             topBackground.color1 = new Color(0.065f, 0.239f, 0f);
             topBackground.SetVerticesDirty();
-
-            await Task.CompletedTask;
 
             var uwu = BeatSaberMarkupLanguage.Utilities.FindSpriteInAssembly("Cherry.Resources.cherry.png");
             uwu.texture.wrapMode = TextureWrapMode.Clamp;
@@ -92,6 +88,11 @@ namespace Cherry.UI
             _requestPanelView.SetQueueButtonColor(Color.red);
             _requestPanelView.SetQueueButtonText("Open Queue");
             _requestDetailView.SetData("Cherry Song", "Cherry Uploader", "Auros", uwu, 0.91f, System.DateTime.Now);
+        }
+
+        public void Dispose()
+        {
+
         }
     }
 }

@@ -25,6 +25,7 @@ namespace Cherry
             });
             zenjector.OnApp<CherryCoreInstaller>();
             zenjector.OnMenu<CherryMenuInstaller>();
+            zenjector.OnApp<CherryFilterInstaller>();
         }
 
         [OnEnable]
