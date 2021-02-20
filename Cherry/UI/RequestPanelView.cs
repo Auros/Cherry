@@ -80,7 +80,8 @@ namespace Cherry.UI
 
         protected void OnDestroy()
         {
-            _playButton.selectionStateDidChangeEvent -= SelectionChanged;
+            if (_playButton != null)
+                _playButton.selectionStateDidChangeEvent -= SelectionChanged;
         }
 
         [UIAction("play-button-clicked")] protected void PBC() => PlayButtonClicked?.Invoke();

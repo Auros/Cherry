@@ -6,10 +6,9 @@ namespace Cherry.Filters
 {
     internal class AlwaysTrueFilter : IRequestFilter<Map>
     {
-        public async Task<FilterResult> Resolve(Map subject, RequestEventArgs requestData)
+        public Task<FilterResult> Resolve(Map subject, RequestEventArgs requestData)
         {
-            await Task.CompletedTask;
-            return new FilterResult(true);
+            return Task.FromResult(new FilterResult(true));
         }
     }
 }

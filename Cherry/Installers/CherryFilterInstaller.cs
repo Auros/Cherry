@@ -7,8 +7,8 @@ namespace Cherry.Installers
     {
         public override void InstallBindings()
         {
+            //Container.BindInterfacesTo<AlwaysFalseFilter>().AsSingle();
             Container.BindInterfacesTo<AlwaysTrueFilter>().AsSingle();
-            Container.BindInterfacesTo<AlwaysFalseFilter>().AsSingle();
             Container.BindInterfacesTo<MapAgeFilter>().AsSingle();
         }
     }
