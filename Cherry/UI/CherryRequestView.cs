@@ -9,6 +9,7 @@ using IPA.Utilities;
 using SiraUtil.Tools;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -33,11 +34,16 @@ namespace Cherry.UI
         [UIComponent("top-panel")]
         protected readonly Backgroundable topPanelBackground = null!;
 
+        [UIComponent("request-queue-text")]
+        protected readonly CurvedTextMeshPro requestQueueText = null!;
+
         internal static readonly FieldAccessor<ImageView, float>.Accessor ImageSkew = FieldAccessor<ImageView, float>.GetAccessor("_skew");
-        internal static readonly FieldAccessor<TableView, Button>.Accessor PageUpButton = FieldAccessor<TableView, Button>.GetAccessor("_pageUpButton");
-        internal static readonly FieldAccessor<TableView, Button>.Accessor PageDownButton = FieldAccessor<TableView, Button>.GetAccessor("_pageDownButton");
+        internal static readonly FieldAccessor<TableView, TableViewScroller>.Accessor Scroller = FieldAccessor<TableView, TableViewScroller>.GetAccessor("scroller");
         internal static readonly FieldAccessor<LevelListTableCell, Image>.Accessor CellCoverImage = FieldAccessor<LevelListTableCell, Image>.GetAccessor("_coverImage");
+        internal static readonly FieldAccessor<TableViewScroller, Button>.Accessor PageUpButton = FieldAccessor<TableViewScroller, Button>.GetAccessor("_pageUpButton");
+        internal static readonly FieldAccessor<TableViewScroller, Button>.Accessor PageDownButton = FieldAccessor<TableViewScroller, Button>.GetAccessor("_pageDownButton");
         internal static readonly FieldAccessor<LevelListTableCell, Image>.Accessor CellBackground = FieldAccessor<LevelListTableCell, Image>.GetAccessor("_backgroundImage");
+        internal static readonly FieldAccessor<TableViewScroller, bool>.Accessor HideScrollButtons = FieldAccessor<TableViewScroller, bool>.GetAccessor("_hideScrollButtonsIfNotNeeded");
         internal static readonly FieldAccessor<CustomListTableData, LevelListTableCell>.Accessor CellInstance = FieldAccessor<CustomListTableData, LevelListTableCell>.GetAccessor("songListTableCellInstance");
 
         private Config _config = null!;
@@ -48,9 +54,12 @@ namespace Cherry.UI
         private CherryLevelManager _cherryLevelManager = null!;
         private WebImageAsyncLoader _webImageAsyncLoader = null!;
 
+        private bool _isInHistory;
         private bool _isProcessing;
         private RequestCellInfo? _lastSelectedCellInfo;
         private Queue<RequestEventArgs> _requestLoadingQueue = null!;
+
+        private readonly List<RequestCellInfo> _activeRequests = new List<RequestCellInfo>();
 
         [UIValue("detail-view")]
         private RequestDetailView _requestDetailView = null!;
@@ -73,16 +82,43 @@ namespace Cherry.UI
             _requestDetailView = container.Instantiate<RequestDetailView>();
             _requestPanelView = container.InstantiateComponent<RequestPanelView>(gameObject);
 
-            foreach (var request in await _requestHistory.History())
-            {
-                _siraLog.Null(request);
-                if (!request.WasPlayed)
-                    _requestLoadingQueue.Enqueue(request.Args);
-            }
+            foreach (var request in (await _requestHistory.History()).Where(r => !r.WasPlayed))
+                _requestLoadingQueue.Enqueue(request.Args);
 
             _requestManager.SongRequested += SongRequested;
             _requestPanelView.SkipButtonClicked += SkipButtonClicked;
             _requestPanelView.QueueButtonClicked += QueueButtonClicked;
+            _requestPanelView.HistoryButtonClicked += HistoryButtonClicked;
+        }
+
+        private void HistoryButtonClicked()
+        {
+            _ = HistoryButtonClickedAsync();
+        }
+
+        private async Task HistoryButtonClickedAsync()
+        {
+            if (_isInHistory)
+            {
+                _isInHistory = false;
+                requestList.data.Clear();
+                requestList.data.AddRange(_activeRequests);
+                requestQueueText.text = "Request Queue";
+                requestList.tableView.ReloadData();
+                _activeRequests.Clear();
+            }
+            else
+            {
+                _isInHistory = true;
+                _activeRequests.Clear();
+                _activeRequests.AddRange(requestList.data.Cast<RequestCellInfo>());
+                requestList.data.Clear();
+                requestList.tableView.ReloadData();
+                requestQueueText.text = "History";
+
+                foreach (var request in (await _requestHistory.History()).Where(r => r.WasPlayed))
+                    _requestLoadingQueue.Enqueue(request.Args);
+            }
         }
 
         private void SkipButtonClicked()
@@ -142,7 +178,7 @@ namespace Cherry.UI
             _requestLoadingQueue.Enqueue(e);
         }
 
-        private async Task SongRequestedAsync(RequestEventArgs e)
+        private async Task SongRequestedAsync(RequestEventArgs e, bool forHistory = false)
         {
             _isProcessing = true;
             try
@@ -154,9 +190,12 @@ namespace Cherry.UI
                 Map map = mapq.Value;
                 Sprite coverSprite = await _webImageAsyncLoader.LoadSpriteAsync($"https://beatsaver.com{map.CoverURL}", CancellationToken.None);
                 RequestCellInfo cell = new RequestCellInfo(e, map, coverSprite);
-                requestList.data.Add(cell);
-
-                requestList.tableView.ReloadData();
+                
+                if ((forHistory && _isInHistory) || !_isInHistory)
+                {
+                    requestList.data.Add(cell);
+                    requestList.tableView.ReloadData();
+                }
             }
             catch (Exception ex)
             {
@@ -170,15 +209,19 @@ namespace Cherry.UI
         {
             if (isInViewControllerHierarchy && !_isProcessing && _requestLoadingQueue.Count > 0)
             {
-                _ = SongRequestedAsync(_requestLoadingQueue.Dequeue());
+                _ = SongRequestedAsync(_requestLoadingQueue.Dequeue(), _isInHistory);
             }
         }
 
         [UIAction("#post-parse")]
         protected void Parsed()
         {
-            PageUpButton(ref requestList.tableView) = upButton;
-            PageDownButton(ref requestList.tableView) = downButton;
+            var scroller = Scroller(ref requestList.tableView);
+            HideScrollButtons(ref scroller) = false;
+
+            PageUpButton(ref scroller) = upButton;
+            PageDownButton(ref scroller) = downButton;
+
             var list = requestList;
             var inst = CellInstance(ref list);
             if (inst == null)
@@ -187,12 +230,14 @@ namespace Cherry.UI
             var cbg = CellCoverImage(ref inst);
             var cellBackground = (bg as ImageView)!;
             var cellCoverImage = (cbg as ImageView)!;
+
             ImageSkew(ref cellBackground) = 0f;
             ImageSkew(ref cellCoverImage) = 0f;
             cellCoverImage.SetVerticesDirty();
             cellBackground.SetVerticesDirty();
             upButton.SetSkew(0f);
             downButton.SetSkew(0f);
+
             ImageView topBackground = (topPanelBackground.background as ImageView)!;
             ImageSkew(ref topBackground) = 0f;
             topBackground.color = Color.white;
@@ -226,6 +271,7 @@ namespace Cherry.UI
             _requestManager.SongRequested -= SongRequested;
             _requestPanelView.SkipButtonClicked -= SkipButtonClicked;
             _requestPanelView.QueueButtonClicked -= QueueButtonClicked;
+            _requestPanelView.HistoryButtonClicked += HistoryButtonClicked;
         }
     }
 }

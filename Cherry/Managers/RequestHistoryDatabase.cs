@@ -111,7 +111,7 @@ namespace Cherry.Managers
                 {
                     var requests = JsonConvert.DeserializeObject<CachedRequest[]>(json);
                     _cachedRequests.Clear();
-                    for (int i = requests.Length - 1; i >= 0; i--)
+                    for (int i = 0; i < requests.Length; i++)
                     {
                         var req = requests[i];
                         req.Args = new RequestEventArgs(req.Key, req.Requester, req.RequestTime, req.Difficulty, req.Modifiers, req.Priority);

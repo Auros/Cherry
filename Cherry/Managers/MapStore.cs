@@ -27,7 +27,7 @@ namespace Cherry.Managers
         {
             if (!_mapCache.TryGetValue(key, out Map map))
             {
-                _siraLog.Info($"Fetching map with key '{key}'.");
+                _siraLog.Debug($"Fetching map with key '{key}'.");
                 WebResponse webResponse = await _siraClient.GetAsync($"http://beatsaver.com/api/maps/detail/{key}", token ?? CancellationToken.None);
                 if (!webResponse.IsSuccessStatusCode)
                 {
