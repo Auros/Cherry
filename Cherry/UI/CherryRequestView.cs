@@ -47,6 +47,7 @@ namespace Cherry.UI
         internal static readonly FieldAccessor<CustomListTableData, LevelListTableCell>.Accessor CellInstance = FieldAccessor<CustomListTableData, LevelListTableCell>.GetAccessor("songListTableCellInstance");
 
         private Config _config = null!;
+        private IDenier _denier = null!;
         private SiraLog _siraLog = null!;
         private MapStore _mapStore = null!;
         private IRequestHistory _requestHistory = null!;
@@ -68,9 +69,10 @@ namespace Cherry.UI
         private RequestPanelView _requestPanelView = null!;
 
         [Inject]
-        protected async Task Construct(Config config, SiraLog siraLog, MapStore mapStore, DiContainer container, IRequestHistory requestHistory, IRequestManager requestManager, CherryLevelManager cherryLevelManager, WebImageAsyncLoader webImageAsyncLoader)
+        protected async Task Construct(Config config, IDenier denier, SiraLog siraLog, MapStore mapStore, DiContainer container, IRequestHistory requestHistory, IRequestManager requestManager, CherryLevelManager cherryLevelManager, WebImageAsyncLoader webImageAsyncLoader)
         {
             _config = config;
+            _denier = denier;
             _siraLog = siraLog;
             _mapStore = mapStore;
             _requestHistory = requestHistory;
@@ -86,9 +88,44 @@ namespace Cherry.UI
                 _requestLoadingQueue.Enqueue(request.Args);
 
             _requestManager.SongRequested += SongRequested;
+            _requestDetailView.BanSongButtonClicked += BanSong;
             _requestPanelView.SkipButtonClicked += SkipButtonClicked;
             _requestPanelView.QueueButtonClicked += QueueButtonClicked;
+            _requestDetailView.BanSessionButtonClicked += BanUserSession;
+            _requestDetailView.BanForeverButtonClicked += BanUserForever;
             _requestPanelView.HistoryButtonClicked += HistoryButtonClicked;
+        }
+
+        private void BanSong(RequestEventArgs request)
+        {
+            _denier.DenySong(request.Key);
+            SkipButtonClicked();
+        }
+
+        private void BanUserSession(IRequester requester)
+        {
+            _denier.DenyUser(requester.ID, DateTime.Now.AddHours(_config.SesssionLengthInHours));
+            RemoveUserFromQueue(requester);
+            ResetSubPanels();
+        }
+
+        private void BanUserForever(IRequester requester)
+        {
+            _denier.DenyUser(requester.ID);
+            RemoveUserFromQueue(requester);
+            ResetSubPanels();
+        }
+
+        private void RemoveUserFromQueue(IRequester requester)
+        {
+            var lid = requester.ID.ToLower();
+            var requesters = requestList.data.Cast<RequestCellInfo>().Where(r => r.request.Requester.ID.ToLower() == lid).ToArray();
+            for (int i = 0; i < requesters.Length; i++)
+            {
+                _requestManager.Remove(requesters[i].request);
+                requestList.data.Remove(requesters[i]);
+            }
+            requestList.tableView.ReloadData();
         }
 
         private void HistoryButtonClicked()
@@ -126,17 +163,21 @@ namespace Cherry.UI
             if (_lastSelectedCellInfo != null)
             {
                 _requestManager.Remove(_lastSelectedCellInfo.request);
-
-                _requestDetailView.SetLoading();
-                _requestPanelView.SetPlayButtonColor(null);
-                _requestPanelView.SetPlayButtonText("Play");
-                _requestPanelView.SetPlayButtonInteractability(false);
-                _requestPanelView.SetSkipButtonInteractability(false);
-                requestList.data.Remove(_lastSelectedCellInfo);
-                requestList.tableView.ReloadData();
-                requestList.tableView.SelectCellWithIdx(-1);
-                _lastSelectedCellInfo = null;
+                ResetSubPanels();
             }
+        }
+
+        private void ResetSubPanels()
+        {
+            _requestDetailView.SetLoading();
+            _requestPanelView.SetPlayButtonColor(null);
+            _requestPanelView.SetPlayButtonText("Play");
+            _requestPanelView.SetPlayButtonInteractability(false);
+            _requestPanelView.SetSkipButtonInteractability(false);
+            requestList.data.Remove(_lastSelectedCellInfo);
+            requestList.tableView.ReloadData();
+            requestList.tableView.SelectCellWithIdx(-1);
+            _lastSelectedCellInfo = null;
         }
 
         private void QueueButtonClicked()
@@ -152,10 +193,9 @@ namespace Cherry.UI
             _requestDetailView.SetData(
                 request.map.Name,
                 request.map.Uploader.Name,
-                request.request.Requester.Username,
+                request.request,
                 request.icon,
-                (float)request.map.MapStats.Rating,
-                request.request.RequestTime
+                (float)request.map.MapStats.Rating
             );
             _requestPanelView.SetSkipButtonInteractability(true);
             bool levelInstalled = _cherryLevelManager.LevelIsInstalled(request.map.Hash);
@@ -255,8 +295,6 @@ namespace Cherry.UI
 
             _requestPanelView.SetQueueButtonColor(_config.QueueOpened ? Color.green : Color.red);
             _requestPanelView.SetQueueButtonText(_config.QueueOpened ? "Close Queue" : "Open Queue");
-
-            //_requestDetailView.SetData("Cherry Song", "Cherry Uploader", "Auros", BeatSaberMarkupLanguage.Utilities.ImageResources.BlankSprite, 0.91f, DateTime.Now);
         }
 
         private void SetQueueStatus(bool value)
@@ -269,9 +307,12 @@ namespace Cherry.UI
         public void Dispose()
         {
             _requestManager.SongRequested -= SongRequested;
+            _requestDetailView.BanSongButtonClicked -= BanSong;
             _requestPanelView.SkipButtonClicked -= SkipButtonClicked;
             _requestPanelView.QueueButtonClicked -= QueueButtonClicked;
-            _requestPanelView.HistoryButtonClicked += HistoryButtonClicked;
+            _requestDetailView.BanSessionButtonClicked -= BanUserSession;
+            _requestDetailView.BanForeverButtonClicked -= BanUserForever;
+            _requestPanelView.HistoryButtonClicked -= HistoryButtonClicked;
         }
     }
 }

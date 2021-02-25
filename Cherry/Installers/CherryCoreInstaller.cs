@@ -1,4 +1,5 @@
 ﻿using ChatCore;
+using Cherry.Interfaces;
 using Cherry.Managers;
 using SiraUtil.Zenject;
 using System;
@@ -15,6 +16,7 @@ namespace Cherry.Installers
             Container.BindInterfacesTo<RequestHistoryDatabase>().AsSingle();
             Container.BindInterfacesTo<CherryRequestManager>().AsSingle();
             Container.BindInterfacesTo<TwitchRequestSource>().AsSingle();
+            Container.Bind<IDenier>().To<CherryDenylist>().AsSingle();
             Container.Bind<CherryLevelManager>().AsSingle();
             Container.Bind<MapStore>().AsSingle();
         }

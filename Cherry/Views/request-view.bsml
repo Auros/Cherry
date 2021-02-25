@@ -28,7 +28,7 @@
             </vertical>
           </horizontal>
           <horizontal horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="64">
-            <button id="requester-button" text="Requester" pref-width="27" italics="false" />
+            <button id="requester-button" text="Request" pref-width="27" italics="false" event-click="show-request" />
             <button id="suggestions-button" text="Suggestions" pref-width="27" italics="false" />
             <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="8" pref-height="5" >
               <text id="rating-text" font-size="3" />
@@ -36,6 +36,15 @@
             </vertical>
           </horizontal>
         </vertical>
+        <modal size-delta-x="75" size-delta-y="40" show-event="show-request" hide-event="hide-request" clickerino-offerino-closerino="true">
+          <vertical pref-width="72" pref-height="40" horizontal-fit="PreferredSize" vertical-fit="PreferredSize">
+            <text id="song-name-text" text="Song Name" font-size="6.5" align="Center" bold="true" />
+            <button id="ban-song-button" text="Ban Song From Being Requested" on-click="ban-song-clicked" italics="false" pref-width="70" />
+            <text id="username-text" text="Username" font-size="6.5" align="Center" bold="true" />
+            <button id="ban-requester-session-button" text="Ban From Requesting For This Session Only" on-click="ban-session-clicked" italics="false" pref-width="70" />
+            <button id="ban-requester-forever-button" text="Ban From Requesting Forever" on-click="ban-forever-clicked" italics="false" pref-width="70" />
+          </vertical>
+        </modal>
       </macro.as-host>
       <macro.as-host host="panel-view">
         <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="64" pref-height="25">
