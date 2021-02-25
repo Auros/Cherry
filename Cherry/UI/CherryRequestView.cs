@@ -40,11 +40,16 @@ namespace Cherry.UI
         internal static readonly FieldAccessor<LevelListTableCell, Image>.Accessor CellBackground = FieldAccessor<LevelListTableCell, Image>.GetAccessor("_backgroundImage");
         internal static readonly FieldAccessor<CustomListTableData, LevelListTableCell>.Accessor CellInstance = FieldAccessor<CustomListTableData, LevelListTableCell>.GetAccessor("songListTableCellInstance");
 
-        private bool _isProcessing;
+        private Config _config = null!;
         private SiraLog _siraLog = null!;
         private MapStore _mapStore = null!;
+        private IRequestHistory _requestHistory = null!;
         private IRequestManager _requestManager = null!;
+        private CherryLevelManager _cherryLevelManager = null!;
         private WebImageAsyncLoader _webImageAsyncLoader = null!;
+
+        private bool _isProcessing;
+        private RequestCellInfo? _lastSelectedCellInfo;
         private Queue<RequestEventArgs> _requestLoadingQueue = null!;
 
         [UIValue("detail-view")]
@@ -54,23 +59,60 @@ namespace Cherry.UI
         private RequestPanelView _requestPanelView = null!;
 
         [Inject]
-        protected void Construct(SiraLog siraLog, MapStore mapStore, DiContainer container, IRequestManager requestManager, WebImageAsyncLoader webImageAsyncLoader)
+        protected async Task Construct(Config config, SiraLog siraLog, MapStore mapStore, DiContainer container, IRequestHistory requestHistory, IRequestManager requestManager, CherryLevelManager cherryLevelManager, WebImageAsyncLoader webImageAsyncLoader)
         {
+            _config = config;
             _siraLog = siraLog;
             _mapStore = mapStore;
+            _requestHistory = requestHistory;
             _requestManager = requestManager;
+            _cherryLevelManager = cherryLevelManager;
             _webImageAsyncLoader = webImageAsyncLoader;
+
             _requestLoadingQueue = new Queue<RequestEventArgs>();
             _requestDetailView = container.Instantiate<RequestDetailView>();
             _requestPanelView = container.InstantiateComponent<RequestPanelView>(gameObject);
 
+            foreach (var request in await _requestHistory.History())
+            {
+                _siraLog.Null(request);
+                if (!request.WasPlayed)
+                    _requestLoadingQueue.Enqueue(request.Args);
+            }
+
             _requestManager.SongRequested += SongRequested;
+            _requestPanelView.SkipButtonClicked += SkipButtonClicked;
+            _requestPanelView.QueueButtonClicked += QueueButtonClicked;
+        }
+
+        private void SkipButtonClicked()
+        {
+            if (_lastSelectedCellInfo != null)
+            {
+                _requestManager.Remove(_lastSelectedCellInfo.request);
+
+                _requestDetailView.SetLoading();
+                _requestPanelView.SetPlayButtonColor(null);
+                _requestPanelView.SetPlayButtonText("Play");
+                _requestPanelView.SetPlayButtonInteractability(false);
+                _requestPanelView.SetSkipButtonInteractability(false);
+                requestList.data.Remove(_lastSelectedCellInfo);
+                requestList.tableView.ReloadData();
+                requestList.tableView.SelectCellWithIdx(-1);
+                _lastSelectedCellInfo = null;
+            }
+        }
+
+        private void QueueButtonClicked()
+        {
+            SetQueueStatus(!_config.QueueOpened);
         }
 
         [UIAction("selected-request")]
-        private void SelectedCell(TableView _, int index)
+        protected void SelectedCell(TableView _, int index)
         {
             RequestCellInfo request = (requestList.data[index] as RequestCellInfo)!;
+            _lastSelectedCellInfo = request;
             _requestDetailView.SetData(
                 request.map.Name,
                 request.map.Uploader.Name,
@@ -79,6 +121,20 @@ namespace Cherry.UI
                 (float)request.map.MapStats.Rating,
                 request.request.RequestTime
             );
+            _requestPanelView.SetSkipButtonInteractability(true);
+            bool levelInstalled = _cherryLevelManager.LevelIsInstalled(request.map.Hash);
+            if (levelInstalled)
+            {
+                _requestPanelView.SetPlayButtonColor(null);
+                _requestPanelView.SetPlayButtonText("Play");
+                _requestPanelView.SetPlayButtonInteractability(true);
+            }
+            else
+            {
+                _requestPanelView.SetPlayButtonText("Download");
+                _requestPanelView.SetPlayButtonColor(Color.red);
+                _requestPanelView.SetPlayButtonInteractability(true);
+            }
         }
 
         private void SongRequested(object sender, RequestEventArgs e)
@@ -93,7 +149,7 @@ namespace Cherry.UI
             {
                 Map? mapq = await _mapStore.GetMapAsync(e.Key);
                 if (mapq == null)
-                    throw new NullReferenceException(nameof(mapq));
+                    return;
                 
                 Map map = mapq.Value;
                 Sprite coverSprite = await _webImageAsyncLoader.LoadSpriteAsync($"https://beatsaver.com{map.CoverURL}", CancellationToken.None);
@@ -144,19 +200,32 @@ namespace Cherry.UI
             topBackground.color1 = new Color(0.065f, 0.239f, 0f);
             topBackground.SetVerticesDirty();
 
-            _requestPanelView.SetPlayButtonColor(null);
             _requestPanelView.SetPlayButtonText("Play");
             _requestPanelView.SetPlayButtonInteractability(false);
+            _requestPanelView.SetSkipButtonInteractability(false);
+            _requestPanelView.SetPlayButtonColor(null);
 
             _requestPanelView.SetQueueButtonText("Open Queue");
             _requestDetailView.SetLoading();
 
+            _requestPanelView.SetQueueButtonColor(_config.QueueOpened ? Color.green : Color.red);
+            _requestPanelView.SetQueueButtonText(_config.QueueOpened ? "Close Queue" : "Open Queue");
+
             //_requestDetailView.SetData("Cherry Song", "Cherry Uploader", "Auros", BeatSaberMarkupLanguage.Utilities.ImageResources.BlankSprite, 0.91f, DateTime.Now);
+        }
+
+        private void SetQueueStatus(bool value)
+        {
+            _config.QueueOpened = value;
+            _requestPanelView.SetQueueButtonColor(_config.QueueOpened ? Color.green : Color.red);
+            _requestPanelView.SetQueueButtonText(_config.QueueOpened ? "Close Queue" : "Open Queue");
         }
 
         public void Dispose()
         {
             _requestManager.SongRequested -= SongRequested;
+            _requestPanelView.SkipButtonClicked -= SkipButtonClicked;
+            _requestPanelView.QueueButtonClicked -= QueueButtonClicked;
         }
     }
 }

@@ -17,6 +17,7 @@ namespace Cherry.Managers
         private readonly List<ICherryRequestSource> _cherryRequestSource;
         private readonly CancellationTokenSource _cancellationTokenSource;
 
+        public event EventHandler<RequestEventArgs>? SongSkipped;
         public event EventHandler<RequestEventArgs>? SongRequested;
         public event EventHandler<CancelEventArgs>? RequestCancelled;
 
@@ -64,6 +65,11 @@ namespace Cherry.Managers
             }
             _siraLog.Debug($"{map.Value.Name} has been requested by {e.Requester.Username}.");
             MainThreadInvoker.Invoke(() => SongRequested?.Invoke(sender, e));
+        }
+
+        public void Remove(RequestEventArgs request)
+        {
+            SongSkipped?.Invoke(this, request);
         }
 
         public void Initialize()

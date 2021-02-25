@@ -7,6 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Zenject;
 
@@ -31,9 +32,19 @@ namespace Cherry.Managers
 
         public void Initialize()
         {
+            _requestManager.SongSkipped += SongSkipped;
             _requestManager.SongRequested += SongRequested;
             if (!_historyFolder.Exists)
                 _historyFolder.Create();
+        }
+
+        private void SongSkipped(object sender, RequestEventArgs e)
+        {
+            var request = _cachedRequests.FirstOrDefault(cr => cr.Args == e);
+            var requests = _cachedRequests.Where(cr => cr != request).ToArray();
+            _cachedRequests.Clear();
+            for (int i = requests.Length - 1; i >= 0; i--)
+                _cachedRequests.Push(requests[i]);
         }
 
         private void SongAccepted(object sender, RequestEventArgs e)
@@ -61,13 +72,28 @@ namespace Cherry.Managers
             {
                 Args = e,
                 WasPlayed = false,
+                Key = e.Key,
+                Priority = e.Priority,
                 SaveTime = DateTime.Now,
+                Modifiers = e.Modifiers,
+                Difficulty = e.Difficulty,
+                RequestTime = e.RequestTime,
+                Requester = new GenericRequester(e.Requester.ID, e.Requester.Username, e. Requester.Elevation)
             });
         }
 
         public void Dispose()
         {
+            _requestManager.SongSkipped -= SongSkipped;
             _requestManager.SongRequested -= SongRequested;
+            _ = DisposeAsync();
+        }
+
+        private async Task DisposeAsync()
+        {
+            using FileStream fs = File.Create(_cacheFile.FullName);
+            using MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(_cachedRequests)));
+            await ms.CopyToAsync(fs);
         }
 
         public async Task<IEnumerable<CachedRequest>> History()
@@ -84,8 +110,13 @@ namespace Cherry.Managers
                 try
                 {
                     var requests = JsonConvert.DeserializeObject<CachedRequest[]>(json);
+                    _cachedRequests.Clear();
                     for (int i = requests.Length - 1; i >= 0; i--)
+                    {
+                        var req = requests[i];
+                        req.Args = new RequestEventArgs(req.Key, req.Requester, req.RequestTime, req.Difficulty, req.Modifiers, req.Priority);
                         _cachedRequests.Push(requests[i]);
+                    }
                 }
                 catch (Exception e)
                 {

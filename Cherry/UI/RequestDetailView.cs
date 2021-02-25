@@ -79,6 +79,8 @@ namespace Cherry.UI
             _ratingText.text = string.Format("{0:0%}", rating);
             _ratingText.color = Utilities.Evaluate(rating);
             _timeText.text = time.ToString("h:mm tt");
+
+            _suggestionsButton.interactable = suggestions != null;
         }
 
         public void SetLoading()

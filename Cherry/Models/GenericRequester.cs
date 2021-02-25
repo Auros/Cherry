@@ -2,7 +2,7 @@
 
 namespace Cherry.Models
 {
-    internal class GenericRequester : IRequester
+    public class GenericRequester : IRequester
     {
         public string ID { get; }
         public string Username { get; }
