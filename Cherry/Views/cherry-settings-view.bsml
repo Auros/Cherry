@@ -1,0 +1,40 @@
+﻿<bg xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd">
+
+  <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-height="80">
+
+    <vertical pref-width="90" pref-height="10" horizontal-fit="PreferredSize" vertical-fit="PreferredSize">
+      <horizontal bg="panel-top" pref-width="80" horizontal-fit="PreferredSize">
+        <text text="Settings" align="Center" font-size="7" />
+      </horizontal>
+    </vertical>
+
+    <scroll-view pref-width="110" pref-height="60" child-expand-width="false">
+      <bool-setting text="Map Rating Filter" value="map-rating-enabled" apply-on-change="true" />
+      <slider-setting text="Minimum Rating" pref-width="80" value="map-rating" apply-on-change="true" formatter="rating-formatter" />
+      <bool-setting text="Allow Automapped Songs" value="automap" apply-on-change="true" />
+      <increment-setting text="Session Length" value="session-length" apply-on-change="true" min="2" formatter="session-formatter" />
+
+      <macro.as-host host="age-host">
+        <bool-setting text="Map Age Filter" value="age-filter-enabled" apply-on-change="true" />
+        <increment-setting text="Month" pref-width="80" value="month" min="1" max="12" apply-on-change="true" integer-only="true" formatter="format-month" />
+        <increment-setting text="Year" pref-width="80" value="year" min="2018" apply-on-change="true" integer-only="true" />
+      </macro.as-host>
+      
+      <div size-delta-y="5" />
+
+      <macro.as-host host="twitch-host">
+        <bool-setting text="Add ! for TTS" value="tts-prefix" apply-on-change="true" />
+        <bool-setting text="Normal User Limits" value="normal-user" apply-on-change="true" />
+        <increment-setting text="Max Requests" integer-only="true" pref-width="80" value="normal-requests" apply-on-change="true" min="1" />
+        <bool-setting text="Subscriber Limits" value="sub" apply-on-change="true" />
+        <increment-setting text="Max Requests" integer-only="true" pref-width="80" value="sub-requests" apply-on-change="true" min="1" />
+        <bool-setting text="VIP Limits" value="vip" apply-on-change="true" />
+        <increment-setting text="Max Requests" integer-only="true" pref-width="80" value="vip-requests" apply-on-change="true" min="1" />
+        <bool-setting text="Mod Limits" value="mod" apply-on-change="true" />
+        <increment-setting text="Max Requests" integer-only="true" pref-width="80" value="mod-requests" apply-on-change="true" min="1" />
+      </macro.as-host>
+      
+    </scroll-view>
+
+  </vertical>
+</bg>

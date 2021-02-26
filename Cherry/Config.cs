@@ -1,5 +1,4 @@
-﻿using Cherry.Models;
-using IPA.Config.Stores;
+﻿using IPA.Config.Stores;
 using IPA.Config.Stores.Attributes;
 using IPA.Config.Stores.Converters;
 using System;
@@ -40,12 +39,12 @@ namespace Cherry
         public virtual ConcurrentRequestPermissions Level4Concurrent { get; set; } = new ConcurrentRequestPermissions { Enabled = false, MaxConcurrentRequests = 10 };
 
         public virtual bool DoMapAge { get; set; }
-        public virtual string MinimumAgeSerializable { get; set; } = null!;
+        public virtual string MinimumAgeSerializable { get; set; } = new DateTime(2018, 5, 1).ToString();
 
         [Ignore]
         public DateTime MinimumAge
         {
-            get => MinimumAgeSerializable != null ? DateTime.Parse(MinimumAgeSerializable) : default;
+            get => MinimumAgeSerializable != null ? DateTime.Parse(MinimumAgeSerializable) : new DateTime(2018, 5, 1);
             set => MinimumAgeSerializable = value.ToString();
         }
 

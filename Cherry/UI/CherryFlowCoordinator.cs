@@ -10,23 +10,31 @@ namespace Cherry.UI
     {
         public void Initialize() { }
         private SiraLog _siraLog = null!;
+        private bool _openedSettings = false;
+
         private ButtonManager _buttonManager = null!;
+        private OpenSettingsView _openSettingsView = null!;
         private CherryRequestView _cherryRequestView = null!;
+        private CherrySettingsView _cherrySettingsView = null!;
         private FlowCoordinator _parentFlowCoordinator = null!;
         private MainFlowCoordinator _mainFlowCoordinator = null!;
+
         private SelectLevelCategoryViewController _selectLevelCategoryViewController = null!;
         private LevelFilteringNavigationController _levelFilteringNavigationController = null!;
         private LevelCollectionNavigationController _levelCollectionNavigationController = null!;
+
         private static readonly FieldAccessor<SelectLevelCategoryViewController, IconSegmentedControl>.Accessor SegmentedControl = FieldAccessor<SelectLevelCategoryViewController, IconSegmentedControl>.GetAccessor("_levelFilterCategoryIconSegmentedControl");
         private static readonly FieldAccessor<SelectLevelCategoryViewController, SelectLevelCategoryViewController.LevelCategoryInfo[]>.Accessor Categories = FieldAccessor<SelectLevelCategoryViewController, SelectLevelCategoryViewController.LevelCategoryInfo[]>.GetAccessor("_levelCategoryInfos");
 
         [Inject]
-        protected void Construct(SiraLog siraLog, ButtonManager buttonManager, CherryRequestView cherryRequestView, MainFlowCoordinator mainFlowCoordinator, SelectLevelCategoryViewController selectLevelCategoryViewController,
-                                 LevelFilteringNavigationController levelFilteringNavigationController, LevelCollectionNavigationController levelCollectionNavigationController)
+        protected void Construct(SiraLog siraLog, ButtonManager buttonManager, OpenSettingsView openSettingsView, CherryRequestView cherryRequestView, CherrySettingsView cherrySettingsView, MainFlowCoordinator mainFlowCoordinator,
+                                 SelectLevelCategoryViewController selectLevelCategoryViewController, LevelFilteringNavigationController levelFilteringNavigationController, LevelCollectionNavigationController levelCollectionNavigationController)
         {
             _siraLog = siraLog;
             _buttonManager = buttonManager;
+            _openSettingsView = openSettingsView;
             _cherryRequestView = cherryRequestView;
+            _cherrySettingsView = cherrySettingsView;
             _mainFlowCoordinator = mainFlowCoordinator;
             _selectLevelCategoryViewController = selectLevelCategoryViewController;
             _levelFilteringNavigationController = levelFilteringNavigationController;
@@ -42,7 +50,9 @@ namespace Cherry.UI
             }
             if (addedToHierarchy)
             {
-                ProvideInitialViewControllers(_cherryRequestView);
+                ViewController view = _openSettingsView;
+                if (_openedSettings) view = _cherrySettingsView;
+                ProvideInitialViewControllers(_cherryRequestView, view);
             }
         }
 
@@ -50,6 +60,13 @@ namespace Cherry.UI
         {
             _buttonManager.WasClicked += CherryWasClicked;
             _cherryRequestView.SelectLevelRequested += SelectLevel;
+            _openSettingsView.OpenSettingsButtonClicked += OpenSettingsButtonWasClicked;
+        }
+
+        private void OpenSettingsButtonWasClicked()
+        {
+            _openedSettings = true;
+            SetLeftScreenViewController(_cherrySettingsView, ViewController.AnimationType.In);
         }
 
         private void SelectLevel(IPreviewBeatmapLevel level)
@@ -61,7 +78,6 @@ namespace Cherry.UI
                 {
                     if (categories[i].levelCategory == SelectLevelCategoryViewController.LevelCategory.All)
                     {
-
                         var control = SegmentedControl(ref _selectLevelCategoryViewController);
                         control.SelectCellWithNumber(i);
 
@@ -77,6 +93,7 @@ namespace Cherry.UI
         {
             _buttonManager.WasClicked -= CherryWasClicked;
             _cherryRequestView.SelectLevelRequested -= SelectLevel;
+            _openSettingsView.OpenSettingsButtonClicked -= OpenSettingsButtonWasClicked;
         }
 
         private void CherryWasClicked()

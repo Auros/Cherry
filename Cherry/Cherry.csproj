@@ -38,6 +38,8 @@
 
     <ItemGroup>
       <None Remove="Resources\cherry.png" />
+      <None Remove="Views\cherry-settings-view.bsml" />
+      <None Remove="Views\open-settings-view.bsml" />
       <None Remove="Views\request-view.bsml" />
     </ItemGroup>
 
@@ -151,7 +153,9 @@
     <ItemGroup>
         <EmbeddedResource Include="manifest.json" />
         <EmbeddedResource Include="Resources\cherry.png" />
+        <EmbeddedResource Include="Views\open-settings-view.bsml" />
         <EmbeddedResource Include="Views\request-view.bsml" />
+        <EmbeddedResource Include="Views\cherry-settings-view.bsml" />
     </ItemGroup>
 
     <ItemGroup>	
