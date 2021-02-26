@@ -43,20 +43,20 @@ namespace Cherry.Managers
             {
                 // the black magic bit from eris
                 SemaphoreSlim semaphoreSlim = new SemaphoreSlim(0, 1);
-                void ReleaseSemaphore(IChatService _)
+                void Release(IChatService _)
                 {
-                    _twitchService.OnLogin -= ReleaseSemaphore;
+                    _twitchService.OnLogin -= Release;
                     semaphoreSlim?.Release();
                 }
                 try
                 {
-                    _twitchService.OnLogin += ReleaseSemaphore;
+                    _twitchService.OnLogin += Release;
                     await semaphoreSlim.WaitAsync(CancellationToken.None);
                 }
                 catch (Exception e)
                 {
                     _siraLog.Error(e);
-                    ReleaseSemaphore(null!);
+                    Release(null!);
                 }
             }
         }
@@ -127,7 +127,10 @@ namespace Cherry.Managers
         {
             if (sender is IChatChannel channel)
             {
-                _twitchService?.SendTextMessage(message, channel);
+                if (!_config.AddTwitchTTSPrefix)
+                    _twitchService?.SendTextMessage(message, channel);
+                else
+                    _twitchService?.SendTextMessage($"! {message}", channel);
             }
         }
 

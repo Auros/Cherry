@@ -66,6 +66,10 @@ namespace Cherry.Managers
             }
             _siraLog.Debug($"{map.Value.Name} has been requested by {e.Requester.Username}.");
             MainThreadInvoker.Invoke(() => SongRequested?.Invoke(sender, e));
+            if (sender is DynamicSender callbackButCooler)
+            {
+                callbackButCooler.SendMessage($"Added {map.Value.Name} uploaded by {map.Value.Uploader.Name} ({map.Value.Key}) to the queue.");
+            }
         }
 
         public void Remove(RequestEventArgs request)

@@ -21,6 +21,7 @@ namespace Cherry
         [NonNullable, UseConverter(typeof(ListConverter<UserBan>))]
         public virtual List<UserBan> BannedUsers { get; set; } = new List<UserBan>();
 
+        public virtual bool AddTwitchTTSPrefix { get; set; } = false;
         public virtual float SesssionLengthInHours { get; set; } = 6f;
 
         [NonNullable]
