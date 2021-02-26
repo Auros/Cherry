@@ -4,22 +4,22 @@ using System.Threading.Tasks;
 
 namespace Cherry.Filters
 {
-    internal class MapAgeFilter : IRequestFilter<Map>
+    internal class AutomappedFilter : IRequestFilter<Map>
     {
         private readonly Config _config;
 
-        public MapAgeFilter(Config config)
+        public AutomappedFilter(Config config)
         {
             _config = config;
         }
 
         public Task<FilterResult> Resolve(Map map, RequestEventArgs requestData)
         {
-            if (!_config.DoMapAge)
+            if (_config.AllowAutoMappedSongs)
                 return Task.FromResult(new FilterResult(true));
 
-            bool safe = map.Uploaded >= _config.MinimumAge;
-            return Task.FromResult(new FilterResult(safe, safe ? null : $"Map ({map.Key}) is too old!"));
+            bool safe = map.MapMetadata.Automapper is null;
+            return Task.FromResult(new FilterResult(safe, safe ? null : $"Automapped maps are banned!"));
         }
     }
 }
