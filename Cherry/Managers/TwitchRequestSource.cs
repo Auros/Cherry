@@ -19,13 +19,13 @@ namespace Cherry.Managers
     {
         public event EventHandler<RequestEventArgs>? SongRequested;
         public event EventHandler<CancelEventArgs>? RequestCancelled;
-        private readonly FieldAccessor<TwitchService, IWebSocketService>.Accessor ServiceSocket = FieldAccessor<TwitchService, IWebSocketService>.GetAccessor("_websocketService");
+        private static readonly FieldAccessor<TwitchService, IWebSocketService>.Accessor ServiceSocket = FieldAccessor<TwitchService, IWebSocketService>.GetAccessor("_websocketService");
 
         private readonly Config _config;
         private readonly SiraLog _siraLog;
-        private TwitchService? _twitchService;
         private readonly ChatCoreInstance _chatCoreInstance;
         private readonly Dictionary<string, RequestEventArgs> _lazyTinyRequestCache = new Dictionary<string, RequestEventArgs>();
+        private TwitchService? _twitchService;
 
         public TwitchRequestSource(Config config, SiraLog siraLog, UBinder<Plugin, ChatCoreInstance> chatCoreInstance)
         {
