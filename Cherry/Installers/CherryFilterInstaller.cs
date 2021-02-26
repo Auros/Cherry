@@ -18,6 +18,7 @@ namespace Cherry.Installers
             Container.BindInterfacesTo<BannedMapFilter>().AsSingle();
 
             Container.BindInterfacesTo<AutomappedFilter>().AsSingle();
+            Container.BindInterfacesTo<LengthFilter>().AsSingle();
             Container.BindInterfacesTo<MapAgeFilter>().AsSingle();
             Container.BindInterfacesTo<RatingFilter>().AsSingle();
         }

@@ -1,5 +1,6 @@
 ﻿using BeatSaberMarkupLanguage.Attributes;
 using BeatSaberMarkupLanguage.ViewControllers;
+using System;
 using Zenject;
 
 namespace Cherry.UI
@@ -41,6 +42,20 @@ namespace Cherry.UI
         [UIValue("age-host")]
         protected Settings.AgeView _ageView = null!;
 
+        [UIValue("msr-length-enabled")]
+        protected bool MSRLengthEnabled
+        {
+            get => _config.DoMaxSongLength;
+            set => _config.DoMaxSongLength = value;
+        }
+
+        [UIValue("msr-length")]
+        protected float MSRLength
+        {
+            get => _config.MaxSongLengthInMinutes;
+            set => _config.MaxSongLengthInMinutes = value;
+        }
+
         [UIValue("twitch-host")]
         protected Settings.TwitchView _twitchView = null!;
 
@@ -62,6 +77,17 @@ namespace Cherry.UI
         protected string FormatSession(float sessionLength)
         {
             return $"{sessionLength} hours";
+        }
+
+        [UIAction("minute-formatter")]
+        protected string MinuteFormatter(float minutes)
+        {
+            float round = (float)Math.Round(minutes, 1);
+            if (minutes == 1f)
+            {
+                return "1 minute";
+            }
+            return $"{round} minutes";
         }
     }
 }

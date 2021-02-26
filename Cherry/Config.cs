@@ -51,6 +51,9 @@ namespace Cherry
         public virtual bool DoMapRating { get; set; }
         public virtual float MiniumMapRating { get; set; } = 0.5f;
 
+        public virtual bool DoMaxSongLength { get; set; }
+        public virtual float MaxSongLengthInMinutes { get; set; } = 10;
+
         public virtual bool AllowAutoMappedSongs { get; set; }
 
         public class UserBan

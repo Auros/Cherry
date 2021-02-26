@@ -13,6 +13,8 @@
       <slider-setting text="Minimum Rating" pref-width="80" value="map-rating" apply-on-change="true" formatter="rating-formatter" />
       <bool-setting text="Allow Automapped Songs" value="automap" apply-on-change="true" />
       <increment-setting text="Session Length" value="session-length" apply-on-change="true" min="2" formatter="session-formatter" />
+      
+      <div size-delta-y="5" />
 
       <macro.as-host host="age-host">
         <bool-setting text="Map Age Filter" value="age-filter-enabled" apply-on-change="true" />
@@ -22,6 +24,11 @@
       
       <div size-delta-y="5" />
 
+      <bool-setting text="Maximum Song Request Length" value="msr-length-enabled" apply-on-change="true" />
+      <increment-setting text="Time" pref-width="80" value="msr-length" apply-on-change="true" formatter="minute-formatter" min="0.5" increment="0.5" />
+      
+      <div size-delta-y="5" />
+      
       <macro.as-host host="twitch-host">
         <bool-setting text="Add ! for TTS" value="tts-prefix" apply-on-change="true" />
         <bool-setting text="Normal User Limits" value="normal-user" apply-on-change="true" />
