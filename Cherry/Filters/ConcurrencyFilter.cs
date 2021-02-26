@@ -59,7 +59,7 @@ namespace Cherry.Filters
                 var id = requestData.Requester.ID.ToLower();
                 var sessionStart = DateTime.Now.AddHours(-_config.SesssionLengthInHours);
                 var history = await _requestHistory.History();
-                isAllowed = max >= history.Count(h => !h.WasPlayed && h.RequestTime > sessionStart && h.Requester.ID.ToLower() == id);
+                isAllowed = max > history.Count(h => !h.WasPlayed && h.RequestTime > sessionStart && h.Requester.ID.ToLower() == id);
             }
             return new FilterResult(isAllowed, isAllowed ? null : $"{requestData.Requester.Username}, you can't have more than {max} requests in the queue!");
         }
