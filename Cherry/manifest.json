@@ -8,6 +8,7 @@
   "gameVersion": "1.13.2",
   "dependsOn": {
     "BSIPA": "^4.1.4",
+    "SongCore": "^3.0.0",
     "SiraUtil": "^2.4.0"
   }
 }

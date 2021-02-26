@@ -58,6 +58,7 @@ namespace Cherry.UI
         private bool _isInHistory;
         private bool _isProcessing;
         private RequestCellInfo? _lastSelectedCellInfo;
+        private CancellationTokenSource? _downloadCancelSource;
         private Queue<RequestEventArgs> _requestLoadingQueue = null!;
         private readonly List<RequestCellInfo> _activeRequests = new List<RequestCellInfo>();
         public event Action<IPreviewBeatmapLevel>? SelectLevelRequested;
@@ -84,13 +85,13 @@ namespace Cherry.UI
             _requestDetailView = container.Instantiate<RequestDetailView>();
             _requestPanelView = container.InstantiateComponent<RequestPanelView>(gameObject);
 
-            foreach (var request in (await _requestHistory.History()).Where(r => !r.WasPlayed))
+            foreach (var request in (await _requestHistory.History()).Where(r => !r.WasPlayed).OrderBy(h => h.Args.RequestTime))
                 _requestLoadingQueue.Enqueue(request.Args);
 
             _requestManager.SongRequested += SongRequested;
             _requestDetailView.BanSongButtonClicked += BanSong;
-            _requestPanelView.SkipButtonClicked += SkipButtonClicked;
             _requestPanelView.PlayButtonClicked += PlayButtonClicked;
+            _requestPanelView.SkipButtonClicked += SkipButtonClicked;
             _requestPanelView.QueueButtonClicked += QueueButtonClicked;
             _requestDetailView.BanSessionButtonClicked += BanUserSession;
             _requestDetailView.BanForeverButtonClicked += BanUserForever;
@@ -101,12 +102,57 @@ namespace Cherry.UI
         {
             if (_lastSelectedCellInfo != null)
             {
-                IPreviewBeatmapLevel? level = _cherryLevelManager.TryGetLevel(_lastSelectedCellInfo.map.Hash);
+                var map = _lastSelectedCellInfo.map;
+                var request = _lastSelectedCellInfo.request;
+                IPreviewBeatmapLevel? level = _cherryLevelManager.TryGetLevel(map.Hash);
                 if (level != null)
                 {
+                    RemoveAndReloadLatest();
                     SelectLevelRequested?.Invoke(level);
+                    _requestManager.MarkAsRead(request);
+                    if (_isInHistory) HistoryButtonClicked();
+                }
+                else
+                {
+                    _ = DownloadRequest(_lastSelectedCellInfo);
                 }
             }
+        }
+
+        private async Task DownloadRequest(RequestCellInfo cell)
+        {
+            _downloadCancelSource = new CancellationTokenSource();
+            Progress<double> progress = new Progress<double>();
+            progress.ProgressChanged += Progress_ProgressChanged;
+            _requestPanelView.SetPlayButtonInteractability(false);
+            IPreviewBeatmapLevel? level = await _cherryLevelManager.DownloadLevel($"{cell.map.Key} ({cell.map.MapMetadata.SongName} - {cell.map.Uploader.Name})", cell.map.Hash, $"https://beatsaver.com{cell.map.DownloadURL}", _downloadCancelSource.Token, progress);
+            _requestPanelView.SetPlayButtonInteractability(true);
+            progress.ProgressChanged -= Progress_ProgressChanged;
+            if (level != null)
+            {
+                _requestPanelView.SetPlayButtonText("Play");
+                _requestPanelView.SetPlayButtonColor(null);
+                RemoveAndReloadLatest();
+                SelectLevelRequested?.Invoke(level);
+                _requestManager.MarkAsRead(cell.request);
+            }
+            else
+            {
+                _requestPanelView.SetPlayButtonText("Download");
+                _requestPanelView.SetPlayButtonColor(Color.red);
+            }
+        }
+
+        private void RemoveAndReloadLatest()
+        {
+            requestList.data.Remove(_lastSelectedCellInfo);
+            requestList.tableView.ReloadData();
+            ResetSubPanels();
+        }
+
+        private void Progress_ProgressChanged(object sender, double value)
+        {
+            _requestPanelView.SetPlayButtonText($"Downloading...\n{string.Format("{0:0%}", value)}");
         }
 
         private void BanSong(RequestEventArgs request)
@@ -148,6 +194,9 @@ namespace Cherry.UI
 
         private async Task HistoryButtonClickedAsync()
         {
+            _requestPanelView.SetHistoryButtonText(_isInHistory ? "History" : "Queue");
+            requestList.tableView.SelectCellWithIdx(-1);
+            ResetSubPanels();
             if (_isInHistory)
             {
                 _isInHistory = false;
@@ -176,6 +225,7 @@ namespace Cherry.UI
             if (_lastSelectedCellInfo != null)
             {
                 _requestManager.Remove(_lastSelectedCellInfo.request);
+                requestList.data.Remove(_lastSelectedCellInfo);
                 ResetSubPanels();
             }
         }
@@ -187,7 +237,6 @@ namespace Cherry.UI
             _requestPanelView.SetPlayButtonText("Play");
             _requestPanelView.SetPlayButtonInteractability(false);
             _requestPanelView.SetSkipButtonInteractability(false);
-            requestList.data.Remove(_lastSelectedCellInfo);
             requestList.tableView.ReloadData();
             requestList.tableView.SelectCellWithIdx(-1);
             _lastSelectedCellInfo = null;
@@ -210,7 +259,7 @@ namespace Cherry.UI
                 request.icon,
                 (float)request.map.MapStats.Rating
             );
-            _requestPanelView.SetSkipButtonInteractability(true);
+            _requestPanelView.SetSkipButtonInteractability(!_isInHistory);
             bool levelInstalled = _cherryLevelManager.LevelIsInstalled(request.map.Hash);
             if (levelInstalled)
             {
@@ -321,6 +370,7 @@ namespace Cherry.UI
         {
             _requestManager.SongRequested -= SongRequested;
             _requestDetailView.BanSongButtonClicked -= BanSong;
+            _requestPanelView.PlayButtonClicked -= PlayButtonClicked;
             _requestPanelView.SkipButtonClicked -= SkipButtonClicked;
             _requestPanelView.QueueButtonClicked -= QueueButtonClicked;
             _requestDetailView.BanSessionButtonClicked -= BanUserSession;

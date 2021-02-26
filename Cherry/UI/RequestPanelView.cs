@@ -1,6 +1,7 @@
 ﻿using BeatSaberMarkupLanguage.Attributes;
 using HMUI;
 using System;
+using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -28,6 +29,7 @@ namespace Cherry.UI
         private ImageView _playButtonOutline = null!;
         private ImageView _playButtonBackground = null!;
         private CurvedTextMeshPro _playButtonText = null!;
+        private CurvedTextMeshPro _historyButtonText = null!;
         private Color _defaultPlayButtonBorderColor = Color.blue;
         private Color _defaultPlayButtonOutlineColor = Color.blue;
         private Color _defaultPlayButtonBGColorLeftTop = Color.blue;
@@ -50,6 +52,7 @@ namespace Cherry.UI
             _queueButtonUnderline = _queueButton.transform.Find("Underline").GetComponent<ImageView>();
 
             _playButtonText = _playButton.GetComponentInChildren<CurvedTextMeshPro>();
+            _historyButtonText = _historyButton.GetComponentInChildren<CurvedTextMeshPro>();
             _playButtonBorder = _playButton.transform.Find("Border").GetComponent<ImageView>();
             _playButtonBackground = _playButton.transform.Find("BG").GetComponent<ImageView>();
             _playButtonOutline = _playButton.transform.Find("OutlineWrapper/Outline").GetComponent<ImageView>();
@@ -104,27 +107,28 @@ namespace Cherry.UI
             if (!color.HasValue)
             {
                 _activeColor = null;
-                _playButton.GetComponent<ButtonStaticAnimations>().enabled = true;
-
                 _playButtonBorder.color = _defaultPlayButtonBorderColor;
                 _playButtonOutline.color = _defaultPlayButtonOutlineColor;
                 _playButtonBackground.color0 = _defaultPlayButtonBGColorLeftTop;
                 _playButtonBackground.color1 = _defaultPlayButtonBGColorLeftBottom;
+                _playButton.GetComponent<ButtonStaticAnimations>().enabled = true;
             }
             else
             {
+                SetPlayButtonInteractability(true);
+                _playButton.GetComponent<ButtonStaticAnimations>().enabled = false;
                 _activeColor = color.Value;
                 var activeColor = color.Value;
-                _playButton.GetComponent<ButtonStaticAnimations>().enabled = false;
-                SetPlayButtonInternal(activeColor);
+                StartCoroutine(SetPlayButtonInternal(activeColor));
             }
             _playButtonBackground.SetVerticesDirty();
             _playButtonOutline.SetVerticesDirty();
             _playButtonBorder.SetVerticesDirty();
         }
 
-        private void SetPlayButtonInternal(Color activeColor)
+        private IEnumerator SetPlayButtonInternal(Color activeColor)
         {
+            yield return new WaitForEndOfFrame();
             _playButtonBackground.color0 = activeColor;
             _playButtonBorder.color = activeColor.ColorWithAlpha(0.65f * activeColor.a);
             _playButtonOutline.color = activeColor.ColorWithAlpha(0.25f * activeColor.a);
@@ -145,6 +149,11 @@ namespace Cherry.UI
         public void SetSkipButtonInteractability(bool interactability)
         {
             _skipButton.interactable = interactability;
+        }
+
+        public void SetHistoryButtonText(string text)
+        {
+            _historyButtonText.text = text;
         }
     }
 }

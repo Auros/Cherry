@@ -20,6 +20,7 @@ namespace Cherry.Managers
         public event EventHandler<RequestEventArgs>? SongSkipped;
         public event EventHandler<RequestEventArgs>? SongRequested;
         public event EventHandler<CancelEventArgs>? RequestCancelled;
+        public event EventHandler<RequestEventArgs>? SongAccepted;
 
         public CherryRequestManager(SiraLog siraLog, MapStore mapStore, List<IRequestFilter<Map>> mapRequestFilters, List<ICherryRequestSource> cherryRequestSource)
         {
@@ -70,6 +71,11 @@ namespace Cherry.Managers
         public void Remove(RequestEventArgs request)
         {
             SongSkipped?.Invoke(this, request);
+        }
+
+        public void MarkAsRead(RequestEventArgs request)
+        {
+            SongAccepted?.Invoke(this, request);
         }
 
         public void Initialize()

@@ -33,6 +33,7 @@ namespace Cherry.Managers
         public void Initialize()
         {
             _requestManager.SongSkipped += SongSkipped;
+            _requestManager.SongAccepted += SongAccepted;
             _requestManager.SongRequested += SongRequested;
             if (!_historyFolder.Exists)
                 _historyFolder.Create();
@@ -85,6 +86,7 @@ namespace Cherry.Managers
         public void Dispose()
         {
             _requestManager.SongSkipped -= SongSkipped;
+            _requestManager.SongAccepted -= SongAccepted;
             _requestManager.SongRequested -= SongRequested;
             _ = DisposeAsync();
         }
