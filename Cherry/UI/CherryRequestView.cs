@@ -59,8 +59,8 @@ namespace Cherry.UI
         private bool _isProcessing;
         private RequestCellInfo? _lastSelectedCellInfo;
         private Queue<RequestEventArgs> _requestLoadingQueue = null!;
-
         private readonly List<RequestCellInfo> _activeRequests = new List<RequestCellInfo>();
+        public event Action<IPreviewBeatmapLevel>? SelectLevelRequested;
 
         [UIValue("detail-view")]
         private RequestDetailView _requestDetailView = null!;
@@ -90,10 +90,23 @@ namespace Cherry.UI
             _requestManager.SongRequested += SongRequested;
             _requestDetailView.BanSongButtonClicked += BanSong;
             _requestPanelView.SkipButtonClicked += SkipButtonClicked;
+            _requestPanelView.PlayButtonClicked += PlayButtonClicked;
             _requestPanelView.QueueButtonClicked += QueueButtonClicked;
             _requestDetailView.BanSessionButtonClicked += BanUserSession;
             _requestDetailView.BanForeverButtonClicked += BanUserForever;
             _requestPanelView.HistoryButtonClicked += HistoryButtonClicked;
+        }
+
+        private void PlayButtonClicked()
+        {
+            if (_lastSelectedCellInfo != null)
+            {
+                IPreviewBeatmapLevel? level = _cherryLevelManager.TryGetLevel(_lastSelectedCellInfo.map.Hash);
+                if (level != null)
+                {
+                    SelectLevelRequested?.Invoke(level);
+                }
+            }
         }
 
         private void BanSong(RequestEventArgs request)
