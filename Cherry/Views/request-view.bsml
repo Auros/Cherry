@@ -13,7 +13,7 @@
     </vertical>
     <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="64" pref-height="70">
       <macro.as-host host="detail-view">
-        <loading id="loading-root" pref-width="30" pref-height="30" preserve-aspect="true" />
+        <image id="cherry-image" pref-width="30" pref-height="30" preserve-aspect="true" />
         <vertical id="content-root" horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="64" pref-height="26.5">
           <horizontal horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="64" pref-height="20">
             <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="20">

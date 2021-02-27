@@ -3,8 +3,13 @@ using BeatSaberMarkupLanguage.Parser;
 using Cherry.Interfaces;
 using Cherry.Models;
 using HMUI;
+using IPA.Loader;
 using IPA.Utilities;
+using SiraUtil.Zenject;
 using System;
+using System.IO;
+using System.Reflection;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -41,8 +46,8 @@ namespace Cherry.UI
         [UIComponent("content-root")]
         protected readonly RectTransform _contentRoot = null!;
 
-        [UIComponent("loading-root")]
-        protected readonly RectTransform _loadingRoot = null!;
+        [UIComponent("cherry-image")]
+        protected readonly ImageView _cherryImage = null!;
 
         [UIComponent("song-name-text")]
         protected readonly CurvedTextMeshPro _songNameText = null!;
@@ -66,6 +71,12 @@ namespace Cherry.UI
         public event Action<IRequester>? BanSessionButtonClicked;
         public event Action<IRequester>? BanForeverButtonClicked;
         private RequestEventArgs? _lastRequest;
+        private Assembly _ourAssembly;
+
+        public RequestDetailView(UBinder<Plugin, PluginMetadata> metadataBinder)
+        {
+            _ourAssembly = metadataBinder.Value.Assembly;
+        }
 
         [UIAction("ban-song-clicked")] protected void BanSong()
         {
@@ -85,9 +96,8 @@ namespace Cherry.UI
             BanForeverButtonClicked?.Invoke(_lastRequest!.Requester);
         }
 
-
         [UIAction("#post-parse")]
-        protected void Parsed()
+        protected async Task Parsed()
         {
             _coverImage.material = Utilities.UINoGlowRoundEdge;
 
@@ -117,13 +127,20 @@ namespace Cherry.UI
             _requesterText.enableAutoSizing = true;
             _songNameText.enableAutoSizing = true;
             _usernameText.enableAutoSizing = true;
+
+            using Stream mrs = _ourAssembly.GetManifestResourceStream("Cherry.Resources.cherry.png");
+            using MemoryStream ms = new MemoryStream();
+            await mrs.CopyToAsync(ms);
+
+            _cherryImage.sprite = BeatSaberMarkupLanguage.Utilities.LoadSpriteRaw(ms.ToArray());
+            _cherryImage.sprite.texture.wrapMode = TextureWrapMode.Clamp;
         }
 
         public void SetData(string songName, string uploaderName, RequestEventArgs request, Sprite imageCover, float rating)
         {
             _lastRequest = request;
             _contentRoot.gameObject.SetActive(true);
-            _loadingRoot.gameObject.SetActive(false);
+            _cherryImage.gameObject.SetActive(false);
 
             _titleText.text = songName;
             _uploaderText.text = uploaderName;
@@ -143,7 +160,7 @@ namespace Cherry.UI
         public void SetLoading()
         {
             _contentRoot.gameObject.SetActive(false);
-            _loadingRoot.gameObject.SetActive(true);
+            _cherryImage.gameObject.SetActive(true);
         }
     }
 }
