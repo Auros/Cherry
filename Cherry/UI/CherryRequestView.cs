@@ -41,12 +41,12 @@ namespace Cherry.UI
         internal static readonly FieldAccessor<ImageView, float>.Accessor ImageSkew = FieldAccessor<ImageView, float>.GetAccessor("_skew");
         internal static readonly FieldAccessor<ImageView, Color>.Accessor ImageColor0 = FieldAccessor<ImageView, Color>.GetAccessor("_color0");
         internal static readonly FieldAccessor<ImageView, Color>.Accessor ImageColor1 = FieldAccessor<ImageView, Color>.GetAccessor("_color1");
-        internal static readonly FieldAccessor<TableView, TableViewScroller>.Accessor Scroller = FieldAccessor<TableView, TableViewScroller>.GetAccessor("scroller");
+        internal static readonly FieldAccessor<TableView, ScrollView>.Accessor Scroller = FieldAccessor<TableView, ScrollView>.GetAccessor("_scrollView");
         internal static readonly FieldAccessor<LevelListTableCell, Image>.Accessor CellCoverImage = FieldAccessor<LevelListTableCell, Image>.GetAccessor("_coverImage");
-        internal static readonly FieldAccessor<TableViewScroller, Button>.Accessor PageUpButton = FieldAccessor<TableViewScroller, Button>.GetAccessor("_pageUpButton");
-        internal static readonly FieldAccessor<TableViewScroller, Button>.Accessor PageDownButton = FieldAccessor<TableViewScroller, Button>.GetAccessor("_pageDownButton");
+        internal static readonly FieldAccessor<ScrollView, Button>.Accessor PageUpButton = FieldAccessor<ScrollView, Button>.GetAccessor("_pageUpButton");
+        internal static readonly FieldAccessor<ScrollView, Button>.Accessor PageDownButton = FieldAccessor<ScrollView, Button>.GetAccessor("_pageDownButton");
         internal static readonly FieldAccessor<LevelListTableCell, Image>.Accessor CellBackground = FieldAccessor<LevelListTableCell, Image>.GetAccessor("_backgroundImage");
-        internal static readonly FieldAccessor<TableViewScroller, bool>.Accessor HideScrollButtons = FieldAccessor<TableViewScroller, bool>.GetAccessor("_hideScrollButtonsIfNotNeeded");
+        //internal static readonly FieldAccessor<ScrollView, bool>.Accessor HideScrollButtons = FieldAccessor<ScrollView, bool>.GetAccessor("_hideScrollButtonsIfNotNeeded");
         internal static readonly FieldAccessor<CustomListTableData, LevelListTableCell>.Accessor CellInstance = FieldAccessor<CustomListTableData, LevelListTableCell>.GetAccessor("songListTableCellInstance");
 
         private Config _config = null!;
@@ -357,7 +357,7 @@ namespace Cherry.UI
         protected void Parsed()
         {
             var scroller = Scroller(ref requestList.tableView);
-            HideScrollButtons(ref scroller) = false;
+            //HideScrollButtons(ref scroller) = false;
 
             PageUpButton(ref scroller) = upButton;
             PageDownButton(ref scroller) = downButton;

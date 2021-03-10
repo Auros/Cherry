@@ -6,9 +6,9 @@
         <text id="request-queue-text" text="Request Queue" align="Center" font-size="7" bold="true" />
       </horizontal>
       <vertical vertical-fit="PreferredSize" pad="2">
-        <action-button id="up-button" text="▲" pref-width="58.5" pref-height="8" italics="false" interactable="false" />
+        <action-button id="up-button" text="▲" event-click="request-list#PageUp" pref-width="58.5" pref-height="8" italics="false" interactable="false" />
         <list id="request-list" visible-cells="6" select-cell="selected-request" expand-cell="true" />
-        <action-button id="down-button" text="▼" pref-width="58.5" pref-height="8" italics="false" interactable="false" />
+        <action-button id="down-button" text="▼" event-click="request-list#PageDown" pref-width="58.5" pref-height="8" italics="false" interactable="false" />
       </vertical>
     </vertical>
     <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="64" pref-height="70">
