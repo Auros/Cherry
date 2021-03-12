@@ -18,7 +18,7 @@ namespace Cherry.Managers
     internal class TwitchRequestSource : ICherryRequestSource
     {
         public event EventHandler<RequestEventArgs>? SongRequested;
-        public event EventHandler<CancelEventArgs>? RequestCancelled;
+        public event EventHandler<RequestEventArgs>? RequestCancelled;
         private static readonly FieldAccessor<TwitchService, IWebSocketService>.Accessor ServiceSocket = FieldAccessor<TwitchService, IWebSocketService>.GetAccessor("_websocketService");
 
         private readonly Config _config;
@@ -105,8 +105,7 @@ namespace Cherry.Managers
             {
                 if (_lazyTinyRequestCache.TryGetValue(message.Sender.Id, out RequestEventArgs request))
                 {
-                    CancelEventArgs args = new CancelEventArgs(request.Key, request.Requester);
-                    RequestCancelled?.Invoke(new TwitchSender(message.Channel, this), args);
+                    RequestCancelled?.Invoke(new TwitchSender(message.Channel, this), request);
                     SendMessage(message.Channel, $"Removed {request.Key} from the queue.");
                     _lazyTinyRequestCache.Remove(message.Sender.Id);
                 }

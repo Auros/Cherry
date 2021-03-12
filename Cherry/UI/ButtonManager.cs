@@ -1,10 +1,14 @@
 ﻿using BeatSaberMarkupLanguage.Components;
+using Cherry.Interfaces;
+using Cherry.Models;
 using IPA.Loader;
 using SiraUtil.Zenject;
 using System;
 using System.IO;
+using System.Linq;
 using System.Reflection;
 using System.Threading.Tasks;
+using Tweening;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
@@ -15,11 +19,17 @@ namespace Cherry.UI
 {
     internal class ButtonManager : IInitializable, IDisposable
     {
+        private bool _lastQueueValue;
         private ClickableImage? _image;
         public event Action? WasClicked;
+        private readonly Config _config;
         private readonly Assembly _assembly;
         private readonly DiContainer _container;
+        private readonly IRequestHistory _requestHistory;
+        private readonly IRequestManager _requestManager;
+        private readonly TweeningManager _tweeningManager;
         private readonly LevelSelectionNavigationController _levelSelectionNavigationController;
+        private static readonly Color _emptyColor = new Color(0.15f, 0f, 0f, 1f);
 
         public Color? DefaultColor
         {
@@ -35,14 +45,23 @@ namespace Cherry.UI
             {
                 if (_image != null && value.HasValue)
                 {
-                    _image.DefaultColor = value.Value;
+                    Color oldColor = _image.color;
+                    _tweeningManager.KillAllTweens(_image);
+                    var tween = new FloatTween(0f, 1f, val => _image!.color = Color.Lerp(oldColor, value.Value, val), 1f, EaseType.InOutSine);
+                    _tweeningManager.AddTween(tween, _image);
+                    tween.onCompleted = delegate () { _image!.DefaultColor = value.Value; };
                 }
             }
         }
 
-        public ButtonManager(DiContainer container, UBinder<Plugin, PluginMetadata> metadataBinder, LevelSelectionNavigationController levelSelectionNavigationController)
+        public ButtonManager(Config config, DiContainer container, UBinder<Plugin, PluginMetadata> metadataBinder, IRequestHistory requestHistory, IRequestManager requestManager, TweeningManager tweeningManager, LevelSelectionNavigationController levelSelectionNavigationController)
         {
+            _config = config;
             _container = container;
+            _requestHistory = requestHistory;
+            _requestManager = requestManager;
+            _tweeningManager = tweeningManager;
+            _lastQueueValue = _config.QueueOpened;
             _assembly = metadataBinder.Value.Assembly;
             _levelSelectionNavigationController = levelSelectionNavigationController;
         }
@@ -50,6 +69,43 @@ namespace Cherry.UI
         public void Initialize()
         {
             _ = InitializeAsync();
+            _config.Updated += Config_Updated;
+            _requestManager.SongSkipped += RequestManager_SongStateChange;
+            _requestManager.SongAccepted += RequestManager_SongStateChange;
+            _requestManager.SongRequested += RequestManager_SongStateChange;
+        }
+
+        private void Config_Updated(Config config)
+        {
+            try
+            {
+                if (_lastQueueValue == config.QueueOpened)
+                    return;
+                _lastQueueValue = config.QueueOpened;
+                RequestManager_SongStateChange(null!, null!);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
+        }
+
+        private async void RequestManager_SongStateChange(object _, RequestEventArgs __)
+        {
+            try
+            {
+                if (!_config.QueueOpened)
+                {
+                    DefaultColor = _emptyColor;
+                    return;
+                }
+                var history = await _requestHistory.History();
+                DefaultColor = history.Any(r => !r.WasPlayed) ? Color.white : _emptyColor;
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+            }
         }
 
         private async Task InitializeAsync()
@@ -62,10 +118,15 @@ namespace Cherry.UI
             _image.OnClickEvent += Clicked;
             _image.sprite = BeatSaberMarkupLanguage.Utilities.LoadSpriteRaw(ms.ToArray());
             _image.sprite.texture.wrapMode = TextureWrapMode.Clamp;
+            RequestManager_SongStateChange(null!, null!);
         }
 
         public void Dispose()
         {
+            _requestManager.SongRequested -= RequestManager_SongStateChange;
+            _requestManager.SongAccepted -= RequestManager_SongStateChange;
+            _requestManager.SongSkipped -= RequestManager_SongStateChange;
+            _config.Updated -= Config_Updated;
             if (_image != null)
                 _image.OnClickEvent -= Clicked;
         }

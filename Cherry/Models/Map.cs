@@ -79,6 +79,27 @@ namespace Cherry.Models
             [JsonProperty("name")]
             public string Name { get; set; }
 
+            [JsonProperty("difficulties")]
+            public DifficultySet Difficulties { get; set; }
+        }
+
+        internal struct Difficulty
+        {
+            [JsonProperty("njs")]
+            public float NJS { get; set; }
+
+            [JsonProperty("length")]
+            public int Length { get; set; }
+        }
+
+        internal struct User
+        {
+            [JsonProperty("username")]
+            public string Name { get; set; }
+        }
+
+        internal struct DifficultySet
+        {
             [JsonProperty("easy")]
             public Difficulty? Easy { get; set; }
 
@@ -93,18 +114,9 @@ namespace Cherry.Models
 
             [JsonProperty("expertPlus")]
             public Difficulty? ExpertPlus { get; set; }
-        }
 
-        internal struct Difficulty
-        {
-            [JsonProperty("njs")]
-            public float NJS { get; set; }
-        }
-
-        internal struct User
-        {
-            [JsonProperty("username")]
-            public string Name { get; set; }
+            [JsonIgnore]
+            public int AnyLength => ExpertPlus?.Length ?? Expert?.Length ?? Hard?.Length ?? Normal?.Length ?? Easy?.Length ?? 0;
         }
     }
 }

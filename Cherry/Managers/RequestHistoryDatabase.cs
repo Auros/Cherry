@@ -35,17 +35,19 @@ namespace Cherry.Managers
             _requestManager.SongSkipped += SongSkipped;
             _requestManager.SongAccepted += SongAccepted;
             _requestManager.SongRequested += SongRequested;
+
             if (!_historyFolder.Exists)
                 _historyFolder.Create();
         }
 
         private void SongSkipped(object sender, RequestEventArgs e)
         {
-            var request = _cachedRequests.FirstOrDefault(cr => cr.Args == e);
+            var request = _cachedRequests.FirstOrDefault(c => c.Args.RequestTime == e.RequestTime && c.Args.Requester.ID == e.Requester.ID);
             var requests = _cachedRequests.Where(cr => cr != request).ToArray();
             _cachedRequests.Clear();
             for (int i = requests.Length - 1; i >= 0; i--)
                 _cachedRequests.Push(requests[i]);
+            Task.Run(Save);
         }
 
         private void SongAccepted(object sender, RequestEventArgs e)
@@ -61,9 +63,10 @@ namespace Cherry.Managers
         private async Task SongAcceptedCallbackAsync(RequestEventArgs e)
         {
             await History();
-            var req = _cachedRequests.Where(c => c.Args == e).FirstOrDefault();
+            var req = _cachedRequests.Where(c => c.Args.RequestTime == e.RequestTime && c.Args.Requester.ID == e.Requester.ID).FirstOrDefault();
             if (req != null)
                 req.WasPlayed = true;
+            await Task.Run(Save);
         }
 
         private async Task SongRequestedCallbackAsync(RequestEventArgs e)
@@ -81,6 +84,7 @@ namespace Cherry.Managers
                 RequestTime = e.RequestTime,
                 Requester = new GenericRequester(e.Requester.ID, e.Requester.Username, e. Requester.Elevation)
             });
+            await Task.Run(Save);
         }
 
         public void Dispose()
@@ -88,11 +92,12 @@ namespace Cherry.Managers
             _requestManager.SongSkipped -= SongSkipped;
             _requestManager.SongAccepted -= SongAccepted;
             _requestManager.SongRequested -= SongRequested;
-            _ = DisposeAsync();
+            _ = Save();
         }
 
-        private async Task DisposeAsync()
+        private async Task Save()
         {
+            _siraLog.Info($"Saving {_cachedRequests.Count()} requests.");
             using FileStream fs = File.Create(_cacheFile.FullName);
             using MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(_cachedRequests)));
             await ms.CopyToAsync(fs);

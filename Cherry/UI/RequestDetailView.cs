@@ -37,6 +37,9 @@ namespace Cherry.UI
         [UIComponent("requester-text")]
         protected readonly CurvedTextMeshPro _requesterText = null!;
 
+        [UIComponent("length-text")]
+        protected readonly CurvedTextMeshPro _lengthText = null!;
+
         [UIComponent("rating-text")]
         protected readonly CurvedTextMeshPro _ratingText = null!;
 
@@ -136,7 +139,7 @@ namespace Cherry.UI
             _cherryImage.sprite.texture.wrapMode = TextureWrapMode.Clamp;
         }
 
-        public void SetData(string songName, string uploaderName, RequestEventArgs request, Sprite imageCover, float rating)
+        public void SetData(string songName, string uploaderName, RequestEventArgs request, Sprite imageCover, float rating, float songLength)
         {
             _lastRequest = request;
             _contentRoot.gameObject.SetActive(true);
@@ -150,6 +153,7 @@ namespace Cherry.UI
             _ratingText.text = string.Format("{0:0%}", rating);
             _ratingText.color = Utilities.Evaluate(rating);
             _timeText.text = request.RequestTime.ToString("h:mm tt");
+            _lengthText.text = songLength.MinSecDurationText();
 
             _suggestionsButton.interactable = false;
 

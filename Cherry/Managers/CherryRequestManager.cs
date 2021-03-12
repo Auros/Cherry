@@ -18,9 +18,8 @@ namespace Cherry.Managers
         private readonly CancellationTokenSource _cancellationTokenSource;
 
         public event EventHandler<RequestEventArgs>? SongSkipped;
-        public event EventHandler<RequestEventArgs>? SongRequested;
-        public event EventHandler<CancelEventArgs>? RequestCancelled;
         public event EventHandler<RequestEventArgs>? SongAccepted;
+        public event EventHandler<RequestEventArgs>? SongRequested;
 
         public CherryRequestManager(SiraLog siraLog, MapStore mapStore, List<IRequestFilter<Map>> mapRequestFilters, List<ICherryRequestSource> cherryRequestSource)
         {
@@ -36,9 +35,9 @@ namespace Cherry.Managers
             _ = RequestReceivedAsync(sender, e);
         }
 
-        private void SongCancelled(object sender, CancelEventArgs e)
+        private void SongCancelled(object sender, RequestEventArgs e)
         {
-            MainThreadInvoker.Invoke(() => RequestCancelled?.Invoke(sender, e));
+            MainThreadInvoker.Invoke(() => SongSkipped?.Invoke(sender, e));
         }
 
         private async Task RequestReceivedAsync(object sender, RequestEventArgs e)

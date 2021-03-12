@@ -7,7 +7,7 @@ namespace Cherry.Interfaces
     public interface ICherryRequestSource
     {
         event EventHandler<RequestEventArgs>? SongRequested;
-        event EventHandler<CancelEventArgs>? RequestCancelled;
+        event EventHandler<RequestEventArgs>? RequestCancelled;
 
         Task Run();
         Task Stop();

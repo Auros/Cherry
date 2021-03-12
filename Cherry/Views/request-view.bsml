@@ -6,9 +6,9 @@
         <text id="request-queue-text" text="Request Queue" align="Center" font-size="7" bold="true" />
       </horizontal>
       <vertical vertical-fit="PreferredSize" pad="2">
-        <action-button id="up-button" text="▲" event-click="request-list#PageUp" pref-width="58.5" pref-height="8" italics="false" interactable="false" />
-        <list id="request-list" visible-cells="6" select-cell="selected-request" expand-cell="true" />
-        <action-button id="down-button" text="▼" event-click="request-list#PageDown" pref-width="58.5" pref-height="8" italics="false" interactable="false" />
+        <action-button active="false" id="up-button" text="▲" event-click="request-list#PageUp" pref-width="58.5" pref-height="8" italics="false" interactable="false" />
+        <list id="request-list" visible-cells="6" select-cell="selected-request" />
+        <action-button active="false" id="down-button" text="▼" event-click="request-list#PageDown" pref-width="58.5" pref-height="8" italics="false" interactable="false" />
       </vertical>
     </vertical>
     <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="64" pref-height="70">
@@ -28,8 +28,11 @@
             </vertical>
           </horizontal>
           <horizontal horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="64">
-            <button id="requester-button" text="Request" pref-width="27" italics="false" event-click="show-request" />
-            <button id="suggestions-button" text="Suggestions" pref-width="27" italics="false" />
+            <button id="requester-button" text="Request" pref-width="44" italics="false" event-click="show-request" />
+            <button id="suggestions-button" active="false" text="Suggestions" pref-width="27" italics="false" />
+            <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="10" pref-height="5">
+              <text id="length-text" text="0:00" align="Capline" font-size="5" />
+            </vertical>
             <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-width="8" pref-height="5" >
               <text id="rating-text" font-size="3" />
               <text id="time-text" font-size="2" />

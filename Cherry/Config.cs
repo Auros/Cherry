@@ -10,6 +10,8 @@ namespace Cherry
 {
     internal class Config
     {
+        public event Action<Config>? Updated;
+
         public virtual bool QueueOpened { get; set; } = false;
         public virtual string RequestCommand { get; set; } = "!bsr";    
         public virtual string CancelCommand { get; set; } = "!oops";
@@ -74,6 +76,11 @@ namespace Cherry
         {
             public virtual bool Enabled { get; set; }
             public virtual int MaxConcurrentRequests { get; set; }
+        }
+
+        public virtual void Changed()
+        {
+            Updated?.Invoke(this);
         }
     }
 }
