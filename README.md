@@ -23,3 +23,11 @@ Like said above, I wanted to make a song request manager that was more lightweig
 **PLEASE NOTE: THIS IS A KEY ONLY REQUEST MANAGER**
 
 This means, people have to enter !bsr (key). This mod does not search by song name!
+
+## Screenshots
+
+![Cherry Request View](https://cdn.sira.pro/images/cherry/cherry1.png)
+
+Click the Cherry to select open the request menu.
+
+![Click The Cherry](https://cdn.sira.pro/images/cherry/cherry2.png)
