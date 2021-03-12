@@ -19,7 +19,7 @@ namespace Cherry.Filters
             if (!_config.DoMaxSongLength)
                 return Task.FromResult(new FilterResult(true));
 
-            bool safe = _config.MaxSongLengthInMinutes >= (subject.MapMetadata.Duration == 0 ? subject.MapMetadata.MapCharacteristics.Select(c => c.Difficulties.AnyLength).FirstOrDefault() : (subject.MapMetadata.Duration / 60f));
+            bool safe = _config.MaxSongLengthInMinutes >= (subject.MapMetadata.Duration == 0 ? subject.MapMetadata.MapCharacteristics.Select(c => c.Difficulties.AnyLength).FirstOrDefault() / 60f : (subject.MapMetadata.Duration / 60f));
             return Task.FromResult(new FilterResult(safe, safe ? null : $"Map ({subject.Key}) is too long!"));
         }
     }
