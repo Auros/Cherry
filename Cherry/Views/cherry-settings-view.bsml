@@ -7,10 +7,14 @@
     </vertical>
 
     <scroll-view pref-width="110" pref-height="60" child-expand-width="false">
+      <bool-setting text="Allow Automapped Songs" value="automap" apply-on-change="true" />
+      <bool-setting text="Allow Mods To Bypass Filters" value="mod-override" apply-on-change="true" />
+      <increment-setting text="Session Length" value="session-length" apply-on-change="true" min="2" formatter="session-formatter" />
+
+      <div size-delta-y="5" />
+
       <bool-setting text="Map Rating Filter" value="map-rating-enabled" apply-on-change="true" />
       <slider-setting text="Minimum Rating" pref-width="80" value="map-rating" apply-on-change="true" formatter="rating-formatter" />
-      <bool-setting text="Allow Automapped Songs" value="automap" apply-on-change="true" />
-      <increment-setting text="Session Length" value="session-length" apply-on-change="true" min="2" formatter="session-formatter" />
       
       <div size-delta-y="5" />
 

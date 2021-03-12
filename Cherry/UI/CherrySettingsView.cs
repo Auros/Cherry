@@ -39,6 +39,13 @@ namespace Cherry.UI
             set => _config.SesssionLengthInHours = value;
         }
 
+        [UIValue("mod-override")]
+        protected bool ModOverride
+        {
+            get => _config.AllowL3FilterBypass;
+            set => _config.AllowL3FilterBypass = value;
+        }
+
         [UIValue("age-host")]
         protected Settings.AgeView _ageView = null!;
 

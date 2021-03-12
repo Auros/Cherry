@@ -11,6 +11,7 @@ namespace Cherry.Managers
 {
     internal class CherryRequestManager : IRequestManager, IInitializable, IDisposable
     {
+        private readonly Config _config;
         private readonly SiraLog _siraLog;
         private readonly MapStore _mapStore;
         private readonly List<IRequestFilter<Map>> _mapRequestFilters;
@@ -21,8 +22,9 @@ namespace Cherry.Managers
         public event EventHandler<RequestEventArgs>? SongAccepted;
         public event EventHandler<RequestEventArgs>? SongRequested;
 
-        public CherryRequestManager(SiraLog siraLog, MapStore mapStore, List<IRequestFilter<Map>> mapRequestFilters, List<ICherryRequestSource> cherryRequestSource)
+        public CherryRequestManager(Config config, SiraLog siraLog, MapStore mapStore, List<IRequestFilter<Map>> mapRequestFilters, List<ICherryRequestSource> cherryRequestSource)
         {
+            _config = config;
             _siraLog = siraLog;
             _mapStore = mapStore;
             _mapRequestFilters = mapRequestFilters;
@@ -51,16 +53,19 @@ namespace Cherry.Managers
                 }
                 return;
             }
-            foreach (var filter in _mapRequestFilters)
+            if (e.Requester.Elevation != Power.Level4 && !(e.Requester.Elevation == Power.Level3 && _config.AllowL3FilterBypass))
             {
-                FilterResult result = await filter.Resolve(map.Value, e);
-                if (!result.IsValid)
+                foreach (var filter in _mapRequestFilters)
                 {
-                    if (result.Error != null && sender is DynamicSender callback)
+                    FilterResult result = await filter.Resolve(map.Value, e);
+                    if (!result.IsValid)
                     {
-                        callback.SendMessage(result.Error);
+                        if (result.Error != null && sender is DynamicSender callback)
+                        {
+                            callback.SendMessage(result.Error);
+                        }
+                        return;
                     }
-                    return;
                 }
             }
             _siraLog.Debug($"{map.Value.Name} has been requested by {e.Requester.Username}.");
