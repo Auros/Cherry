@@ -21,6 +21,7 @@ namespace Cherry.Installers
             Container.BindInterfacesTo<LengthFilter>().AsSingle();
             Container.BindInterfacesTo<MapAgeFilter>().AsSingle();
             Container.BindInterfacesTo<RatingFilter>().AsSingle();
+            Container.BindInterfacesTo<NJSFilter>().AsSingle();
         }
     }
 }

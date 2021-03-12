@@ -97,7 +97,6 @@ namespace Cherry.Managers
 
         private async Task Save()
         {
-            _siraLog.Info($"Saving {_cachedRequests.Count()} requests.");
             using FileStream fs = File.Create(_cacheFile.FullName);
             using MemoryStream ms = new MemoryStream(Encoding.UTF8.GetBytes(JsonConvert.SerializeObject(_cachedRequests)));
             await ms.CopyToAsync(fs);

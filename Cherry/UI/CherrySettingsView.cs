@@ -42,6 +42,34 @@ namespace Cherry.UI
         [UIValue("age-host")]
         protected Settings.AgeView _ageView = null!;
 
+        [UIValue("min-njs-enabled")]
+        protected bool MinNJSEnabled
+        {
+            get => _config.DoMinNJS;
+            set => _config.DoMinNJS = value;
+        }
+
+        [UIValue("min-njs")]
+        protected float MinNJS
+        {
+            get => _config.MinNJS;
+            set => _config.MinNJS = value;
+        }
+
+        [UIValue("max-njs-enabled")]
+        protected bool MaxNJSEnabled
+        {
+            get => _config.DoMaxNJS;
+            set => _config.DoMaxNJS = value;
+        }
+
+        [UIValue("max-njs")]
+        protected float MaxNJS
+        {
+            get => _config.MaxNJS;
+            set => _config.MaxNJS = value;
+        }
+
         [UIValue("msr-length-enabled")]
         protected bool MSRLengthEnabled
         {

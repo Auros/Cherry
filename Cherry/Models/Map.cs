@@ -1,5 +1,6 @@
 ﻿using Newtonsoft.Json;
 using System;
+using System.Linq;
 
 namespace Cherry.Models
 {
@@ -117,6 +118,40 @@ namespace Cherry.Models
 
             [JsonIgnore]
             public int AnyLength => ExpertPlus?.Length ?? Expert?.Length ?? Hard?.Length ?? Normal?.Length ?? Easy?.Length ?? 0;
+
+            [JsonIgnore]
+            private float? _min;
+
+            [JsonIgnore]
+            private float? _max;
+
+            [JsonIgnore]
+            public float MinNJS
+            {
+                get
+                {
+                    if (_min.HasValue)
+                        return _min.Value;
+                    float?[] minPool = new float?[] { ExpertPlus?.NJS, Expert?.NJS, Hard?.NJS, Normal?.NJS, Easy?.NJS };
+
+                    _min = minPool.Where(njs => njs.HasValue).Min();
+                    return _min.GetValueOrDefault();
+                }
+            }
+
+            [JsonIgnore]
+            public float MaxNJS
+            {
+                get
+                {
+                    if (_max.HasValue)
+                        return _max.Value;
+                    float?[] maxPool = new float?[] { ExpertPlus?.NJS, Expert?.NJS, Hard?.NJS, Normal?.NJS, Easy?.NJS };
+
+                    _max = maxPool.Where(njs => njs.HasValue).Min();
+                    return _max.GetValueOrDefault();
+                }
+            }
         }
     }
 }

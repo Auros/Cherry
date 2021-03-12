@@ -142,7 +142,6 @@ namespace Cherry.UI
         protected void Parsed()
         {
             var scroller = Scroller(ref requestList.tableView);
-            //HideScrollButtons(ref scroller) = false;
 
             PageUpButton(ref scroller) = upButton;
             PageDownButton(ref scroller) = downButton;

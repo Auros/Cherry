@@ -58,6 +58,11 @@ namespace Cherry
 
         public virtual bool AllowAutoMappedSongs { get; set; }
 
+        public virtual bool DoMinNJS { get; set; }
+        public virtual bool DoMaxNJS { get; set; }
+        public virtual float MinNJS { get; set; } = 10f;
+        public virtual float MaxNJS { get; set; } = 20f;
+
         public class UserBan
         {
             public virtual string ID { get; set; } = null!;

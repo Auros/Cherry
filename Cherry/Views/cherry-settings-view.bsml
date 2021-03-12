@@ -1,7 +1,5 @@
 ﻿<bg xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="https://monkeymanboy.github.io/BSML-Docs/ https://raw.githubusercontent.com/monkeymanboy/BSML-Docs/gh-pages/BSMLSchema.xsd">
-
   <vertical horizontal-fit="PreferredSize" vertical-fit="PreferredSize" pref-height="80">
-
     <vertical pref-width="90" pref-height="10" horizontal-fit="PreferredSize" vertical-fit="PreferredSize">
       <horizontal bg="panel-top" pref-width="80" horizontal-fit="PreferredSize">
         <text text="Settings" align="Center" font-size="7" />
@@ -18,14 +16,21 @@
 
       <macro.as-host host="age-host">
         <bool-setting text="Map Age Filter" value="age-filter-enabled" apply-on-change="true" />
-        <increment-setting text="Month" pref-width="80" value="month" min="1" max="12" apply-on-change="true" integer-only="true" formatter="format-month" />
-        <increment-setting text="Year" pref-width="80" value="year" min="2018" apply-on-change="true" integer-only="true" />
+        <increment-setting text="Minimum Month" pref-width="80" value="month" min="1" max="12" apply-on-change="true" integer-only="true" formatter="format-month" />
+        <increment-setting text="Minimum Year" pref-width="80" value="year" min="2018" apply-on-change="true" integer-only="true" />
       </macro.as-host>
       
       <div size-delta-y="5" />
 
       <bool-setting text="Maximum Song Request Length" value="msr-length-enabled" apply-on-change="true" />
       <increment-setting text="Time" pref-width="80" value="msr-length" apply-on-change="true" formatter="minute-formatter" min="0.5" increment="0.5" />
+      
+      <div size-delta-y="5" />
+
+      <bool-setting text="Limit Minimum NJS" value="min-njs-enabled" apply-on-change="true" />
+      <increment-setting text="Minimum NJS" pref-width="80" value="min-njs" apply-on-change="true" min="0.5" increment="0.5" />
+      <bool-setting text="Limit Maximum NJS" value="max-njs-enabled" apply-on-change="true" />
+      <increment-setting text="Maximum NJS" pref-width="80" value="max-njs" apply-on-change="true" min="0.5" increment="0.5" />
       
       <div size-delta-y="5" />
       
@@ -40,8 +45,6 @@
         <bool-setting text="Mod Limits" value="mod" apply-on-change="true" />
         <increment-setting text="Max Requests" integer-only="true" pref-width="80" value="mod-requests" apply-on-change="true" min="1" />
       </macro.as-host>
-      
     </scroll-view>
-
   </vertical>
 </bg>
