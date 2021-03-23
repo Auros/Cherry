@@ -42,7 +42,11 @@ namespace Cherry.Managers
         {
             var response = await _siraClient.SendAsync(HttpMethod.Get, url, token, progress: downloadProgress);
             if (!response.IsSuccessStatusCode)
+            {
+                _siraLog.Error(response.ContentToString());
+                _siraLog.Error(response.StatusCode);
                 return null;
+            }
 
             var extractPath = await ExtractZipAsync(response.ContentToBytes(), name, CustomLevelPathHelper.customLevelsDirectoryPath);
             if (string.IsNullOrEmpty(extractPath))

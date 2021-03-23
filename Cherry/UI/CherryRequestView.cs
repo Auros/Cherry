@@ -86,7 +86,7 @@ namespace Cherry.UI
         private readonly List<RequestCellInfo> _activeRequests = new List<RequestCellInfo>();
         public event Action<IPreviewBeatmapLevel>? SelectLevelRequested;
 
-        private readonly Color _downloadButtonColor = new Color(0.7f, 0.47f, 0f);
+        private readonly Color _downloadButtonColor = new Color(0.5f, 0.5f, 0.5f);
         private readonly Color _openColor0 = new Color(0.217f, 0.782f, 0f);
         private readonly Color _openColor1 = new Color(0.065f, 0.239f, 0f);
         private readonly Color _closedColor0 = new Color(0.804f, 0.217f, 0.152f);
@@ -111,7 +111,7 @@ namespace Cherry.UI
             _requestDetailView = container.Instantiate<RequestDetailView>();
             _requestPanelView = container.InstantiateComponent<RequestPanelView>(gameObject);
 
-            foreach (var request in (await _requestHistory.History()).Where(r => !r.WasPlayed).OrderBy(h => h.Args.RequestTime))
+            foreach (var request in (await _requestHistory.History()).Where(r => !r.WasPlayed && r.RequestTime >= DateTime.Now.AddHours(-_config.SesssionLengthInHours)).OrderBy(h => h.Args.RequestTime))
                 _requestLoadingQueue.Enqueue(request.Args);
 
             _requestManager.SongRequested += SongRequested;
@@ -294,13 +294,14 @@ namespace Cherry.UI
             Progress<double> progress = new Progress<double>();
             progress.ProgressChanged += Progress_ProgressChanged;
             IPreviewBeatmapLevel? level = null;
+            _requestPanelView.SetPlayButtonText("Fetching...");
             try
             {
                 level = await _cherryLevelManager.DownloadLevel($"{cell.map.Key} ({cell.map.MapMetadata.SongName} - {cell.map.Uploader.Name})", cell.map.Hash, $"https://beatsaver.com{cell.map.DownloadURL}", _downloadCancelSource.Token, progress);
             }
-            catch
+            catch (Exception e)
             {
-
+                _siraLog.Logger.Error(e);
             }
             _downloadCancelSource = null;
             progress.ProgressChanged -= Progress_ProgressChanged;
@@ -443,7 +444,10 @@ namespace Cherry.UI
             {
                 Map? mapq = await _mapStore.GetMapAsync(e.Key);
                 if (mapq == null)
+                {
+                    _isProcessing = false;
                     return;
+                }
                 
                 Map map = mapq.Value;
                 Sprite coverSprite = await _webImageAsyncLoader.LoadSpriteAsync($"https://beatsaver.com{map.CoverURL}", CancellationToken.None);
