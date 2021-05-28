@@ -3,9 +3,9 @@
   "id": "Cherry",
   "name": "Cherry",
   "author": "Auros",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "A lightweight chat-based song request mod.",
-  "gameVersion": "1.13.4",
+  "gameVersion": "1.16.1",
   "dependsOn": {
     "BSIPA": "^4.1.4",
     "SongCore": "^3.0.0",

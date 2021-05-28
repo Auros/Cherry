@@ -19,6 +19,7 @@ namespace Cherry.UI
         private FlowCoordinator _parentFlowCoordinator = null!;
         private MainFlowCoordinator _mainFlowCoordinator = null!;
 
+        private LevelSearchViewController _levelSearchViewController = null!;
         private SelectLevelCategoryViewController _selectLevelCategoryViewController = null!;
         private LevelFilteringNavigationController _levelFilteringNavigationController = null!;
         private LevelCollectionNavigationController _levelCollectionNavigationController = null!;
@@ -27,7 +28,7 @@ namespace Cherry.UI
         private static readonly FieldAccessor<SelectLevelCategoryViewController, SelectLevelCategoryViewController.LevelCategoryInfo[]>.Accessor Categories = FieldAccessor<SelectLevelCategoryViewController, SelectLevelCategoryViewController.LevelCategoryInfo[]>.GetAccessor("_levelCategoryInfos");
 
         [Inject]
-        protected void Construct(SiraLog siraLog, ButtonManager buttonManager, OpenSettingsView openSettingsView, CherryRequestView cherryRequestView, CherrySettingsView cherrySettingsView, MainFlowCoordinator mainFlowCoordinator,
+        protected void Construct(SiraLog siraLog, ButtonManager buttonManager, OpenSettingsView openSettingsView, CherryRequestView cherryRequestView, CherrySettingsView cherrySettingsView, MainFlowCoordinator mainFlowCoordinator, LevelSearchViewController levelSearchViewController,
                                  SelectLevelCategoryViewController selectLevelCategoryViewController, LevelFilteringNavigationController levelFilteringNavigationController, LevelCollectionNavigationController levelCollectionNavigationController)
         {
             _siraLog = siraLog;
@@ -36,6 +37,7 @@ namespace Cherry.UI
             _cherryRequestView = cherryRequestView;
             _cherrySettingsView = cherrySettingsView;
             _mainFlowCoordinator = mainFlowCoordinator;
+            _levelSearchViewController = levelSearchViewController;
             _selectLevelCategoryViewController = selectLevelCategoryViewController;
             _levelFilteringNavigationController = levelFilteringNavigationController;
             _levelCollectionNavigationController = levelCollectionNavigationController;
@@ -81,6 +83,7 @@ namespace Cherry.UI
                         var control = SegmentedControl(ref _selectLevelCategoryViewController);
                         control.SelectCellWithNumber(i);
 
+                        _levelSearchViewController.ResetCurrentFilterParams();
                         _levelFilteringNavigationController.UpdateSecondChildControllerContent(SelectLevelCategoryViewController.LevelCategory.All);
                         _levelCollectionNavigationController.SelectLevel(level);
                         break;
