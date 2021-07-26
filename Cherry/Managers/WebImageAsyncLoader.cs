@@ -22,7 +22,7 @@ namespace Cherry.Managers
             _siraLog = siraLog;
             _siraClient = siraClient;
             _cancellationTokenSource = new CancellationTokenSource();
-            _siraClient.SetUserAgent(nameof(Cherry), metadataBinder.Value.Version);
+            _siraClient.SetUserAgent(nameof(Cherry), metadataBinder.Value.HVersion);
         }
 
         public async Task<Sprite> LoadSpriteAsync(string path, CancellationToken cancellationToken)

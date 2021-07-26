@@ -20,7 +20,7 @@ namespace Cherry.Managers
             _siraLog = siraLog;
             _siraClient = siraClient;
             _mapCache = new Dictionary<string, Map>();
-            _siraClient.SetUserAgent(nameof(Cherry), metadataBinder.Value.Version);
+            _siraClient.SetUserAgent(nameof(Cherry), metadataBinder.Value.HVersion);
         }
 
         public async Task<Map?> GetMapAsync(string key, CancellationToken? token = null)
