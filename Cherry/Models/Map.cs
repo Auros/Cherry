@@ -15,26 +15,26 @@ namespace Cherry.Models
         [JsonProperty("description")]
         public string Description { get; set; }
 
-        [JsonProperty("key")]
+        [JsonProperty("id")]
         public string Key { get; set; }
 
         [JsonProperty("name")]
         public string Name { get; set; }
 
-        [JsonProperty("hash")]
-        public string Hash { get; set; }
-
         [JsonProperty("uploaded")]
         public DateTime Uploaded { get; set; }
 
-        [JsonProperty("downloadURL")]
-        public string DownloadURL { get; set; }
-
-        [JsonProperty("coverURL")]
-        public string CoverURL { get; set; }
-
         [JsonProperty("uploader")]
         public User Uploader { get; set; }
+
+        [JsonProperty("automapper")]
+        public bool Automapper { get; set; }
+
+        [JsonProperty("versions")]
+        public Version[] Versions { get; set; }
+
+        [JsonIgnore]
+        public Version LatestVersion => Versions[0];
 
         internal struct Metadata
         {
@@ -44,9 +44,6 @@ namespace Cherry.Models
             [JsonProperty("songAuthorName")]
             public string SongAuthorName { get; set; }
 
-            [JsonProperty("automapper")]
-            public string? Automapper { get; set; }
-
             [JsonProperty("songSubName")]
             public string SongSubName { get; set; }
 
@@ -55,9 +52,6 @@ namespace Cherry.Models
 
             [JsonProperty("duration")]
             public int Duration { get; set; }
-
-            [JsonProperty("characteristics")]
-            public Characteristic[] MapCharacteristics { get; set; }
         }
 
         internal struct Stats
@@ -65,23 +59,14 @@ namespace Cherry.Models
             [JsonProperty("downloads")]
             public int Downloads { get; set; }
 
-            [JsonProperty("downVotes")]
-            public int DownVotes { get; set; }
+            [JsonProperty("downvotes")]
+            public int Downvotes { get; set; }
 
-            [JsonProperty("upVotes")]
-            public int UpVotes { get; set; }
+            [JsonProperty("upvotes")]
+            public int Upvotes { get; set; }
             
-            [JsonProperty("rating")]
-            public double Rating { get; set; }
-        }
-
-        internal struct Characteristic
-        {
-            [JsonProperty("name")]
-            public string Name { get; set; }
-
-            [JsonProperty("difficulties")]
-            public DifficultySet Difficulties { get; set; }
+            [JsonProperty("score")]
+            public float Rating { get; set; }
         }
 
         internal struct Difficulty
@@ -89,35 +74,30 @@ namespace Cherry.Models
             [JsonProperty("njs")]
             public float NJS { get; set; }
 
-            [JsonProperty("length")]
-            public int Length { get; set; }
+            [JsonProperty("seconds")]
+            public float Seconds { get; set; }
         }
 
         internal struct User
         {
-            [JsonProperty("username")]
+            [JsonProperty("name")]
             public string Name { get; set; }
         }
 
-        internal struct DifficultySet
+        internal struct Version
         {
-            [JsonProperty("easy")]
-            public Difficulty? Easy { get; set; }
 
-            [JsonProperty("normal")]
-            public Difficulty? Normal { get; set; }
+            [JsonProperty("downloadURL")]
+            public string DownloadURL { get; set; }
 
-            [JsonProperty("hard")]
-            public Difficulty? Hard { get; set; }
+            [JsonProperty("coverURL")]
+            public string CoverURL { get; set; }
 
-            [JsonProperty("expert")]
-            public Difficulty? Expert { get; set; }
+            [JsonProperty("diffs")]
+            public Difficulty[] Difficulties { get; set; }
 
-            [JsonProperty("expertPlus")]
-            public Difficulty? ExpertPlus { get; set; }
-
-            [JsonIgnore]
-            public int AnyLength => ExpertPlus?.Length ?? Expert?.Length ?? Hard?.Length ?? Normal?.Length ?? Easy?.Length ?? 0;
+            [JsonProperty("hash")]
+            public string Hash { get; set; }
 
             [JsonIgnore]
             private float? _min;
@@ -132,9 +112,9 @@ namespace Cherry.Models
                 {
                     if (_min.HasValue)
                         return _min.Value;
-                    float?[] minPool = new float?[] { ExpertPlus?.NJS, Expert?.NJS, Hard?.NJS, Normal?.NJS, Easy?.NJS };
+                    float[] minPool = Difficulties.Select(d => d.NJS).ToArray();
 
-                    _min = minPool.Where(njs => njs.HasValue).Min();
+                    _min = minPool.Min();
                     return _min.GetValueOrDefault();
                 }
             }
@@ -146,9 +126,9 @@ namespace Cherry.Models
                 {
                     if (_max.HasValue)
                         return _max.Value;
-                    float?[] maxPool = new float?[] { ExpertPlus?.NJS, Expert?.NJS, Hard?.NJS, Normal?.NJS, Easy?.NJS };
+                    float[] maxPool = Difficulties.Select(d => d.NJS).ToArray();
 
-                    _max = maxPool.Where(njs => njs.HasValue).Min();
+                    _max = maxPool.Min();
                     return _max.GetValueOrDefault();
                 }
             }

@@ -201,11 +201,7 @@ namespace Cherry.UI
 
             RequestCellInfo request = (requestList.data[index] as RequestCellInfo)!;
 
-            int durationInSeconds = request.map.MapMetadata.Duration;
-            if (durationInSeconds == 0)
-            {
-                durationInSeconds = request.map.MapMetadata.MapCharacteristics.Select(f => f.Difficulties.AnyLength).FirstOrDefault();
-            }
+            float durationInSeconds = request.map.LatestVersion.Difficulties.Select(f => f.Seconds).FirstOrDefault();
             _lastSelectedCellInfo = request;
             _requestDetailView.SetData(
                 request.map.Name,
@@ -216,7 +212,7 @@ namespace Cherry.UI
                 durationInSeconds
             );
             _requestPanelView.SetSkipButtonInteractability(!_isInHistory);
-            bool levelInstalled = _cherryLevelManager.LevelIsInstalled(request.map.Hash);
+            bool levelInstalled = _cherryLevelManager.LevelIsInstalled(request.map.LatestVersion.Hash);
             if (levelInstalled)
             {
                 _requestPanelView.SetPlayButtonColor(null);
@@ -265,7 +261,7 @@ namespace Cherry.UI
             {
                 var map = _lastSelectedCellInfo.map;
                 var request = _lastSelectedCellInfo.request;
-                IPreviewBeatmapLevel? level = _cherryLevelManager.TryGetLevel(map.Hash);
+                IPreviewBeatmapLevel? level = _cherryLevelManager.TryGetLevel(map.LatestVersion.Hash);
                 if (level != null)
                 {
                     RemoveAndReloadLatest();
@@ -297,7 +293,7 @@ namespace Cherry.UI
             _requestPanelView.SetPlayButtonText("Fetching...");
             try
             {
-                level = await _cherryLevelManager.DownloadLevel($"{cell.map.Key} ({cell.map.MapMetadata.SongName} - {cell.map.Uploader.Name})", cell.map.Hash, $"https://beatsaver.com{cell.map.DownloadURL}", _downloadCancelSource.Token, progress);
+                level = await _cherryLevelManager.DownloadLevel($"{cell.map.Key} ({cell.map.MapMetadata.SongName} - {cell.map.Uploader.Name})", cell.map.LatestVersion.Hash, cell.map.LatestVersion.DownloadURL, _downloadCancelSource.Token, progress);
             }
             catch (Exception e)
             {
@@ -450,7 +446,7 @@ namespace Cherry.UI
                 }
                 
                 Map map = mapq.Value;
-                Sprite coverSprite = await _webImageAsyncLoader.LoadSpriteAsync($"https://beatsaver.com{map.CoverURL}", CancellationToken.None);
+                Sprite coverSprite = await _webImageAsyncLoader.LoadSpriteAsync(map.LatestVersion.CoverURL, CancellationToken.None);
                 RequestCellInfo cell = new RequestCellInfo(e, map, coverSprite);
 
                 if (!(forHistory && !_isInHistory))

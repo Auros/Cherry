@@ -18,13 +18,13 @@ namespace Cherry.Filters
         {
             if (_config.DoMinNJS)
             {
-                if (subject.MapMetadata.MapCharacteristics.Any(c => c.Difficulties.MinNJS >= _config.MinNJS))
+                if (subject.LatestVersion.MinNJS <= _config.MinNJS)
                     return Task.FromResult(new FilterResult(true));
                 return Task.FromResult(new FilterResult(false, $"NJS is too low! Minimum: {_config.MaxNJS}"));
             }
             if (_config.DoMaxNJS)
             {
-                if (subject.MapMetadata.MapCharacteristics.Any(c => _config.MaxNJS >= c.Difficulties.MaxNJS))
+                if (subject.LatestVersion.MaxNJS >= _config.MaxNJS)
                     return Task.FromResult(new FilterResult(true));
                 return Task.FromResult(new FilterResult(false, $"NJS is too high! Maximum: {_config.MaxNJS}"));
             }

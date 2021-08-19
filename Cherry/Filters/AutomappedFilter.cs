@@ -18,7 +18,7 @@ namespace Cherry.Filters
             if (_config.AllowAutoMappedSongs)
                 return Task.FromResult(new FilterResult(true));
 
-            bool safe = map.MapMetadata.Automapper is null;
+            bool safe = !map.Automapper;
             return Task.FromResult(new FilterResult(safe, safe ? null : $"Automapped maps are banned!"));
         }
     }
