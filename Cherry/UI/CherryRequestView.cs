@@ -93,7 +93,7 @@ namespace Cherry.UI
         private readonly Color _closedColor1 = new Color(0.652f, 0f, 0f);
 
         [Inject]
-        protected async Task Construct(Config config, IDenier denier, SiraLog siraLog, MapStore mapStore, DiContainer container, IRequestHistory requestHistory, IRequestManager requestManager, TweeningManager tweeningManager, CherryLevelManager cherryLevelManager, WebImageAsyncLoader webImageAsyncLoader)
+        protected async Task Construct(Config config, IDenier denier, SiraLog siraLog, MapStore mapStore, DiContainer container, IRequestHistory requestHistory, IRequestManager requestManager, TimeTweeningManager tweeningManager, CherryLevelManager cherryLevelManager, WebImageAsyncLoader webImageAsyncLoader)
         {
             _config = config;
             _denier = denier;

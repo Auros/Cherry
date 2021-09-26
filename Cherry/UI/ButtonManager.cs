@@ -54,7 +54,7 @@ namespace Cherry.UI
             }
         }
 
-        public ButtonManager(Config config, DiContainer container, UBinder<Plugin, PluginMetadata> metadataBinder, IRequestHistory requestHistory, IRequestManager requestManager, TweeningManager tweeningManager, LevelSelectionNavigationController levelSelectionNavigationController)
+        public ButtonManager(Config config, DiContainer container, UBinder<Plugin, PluginMetadata> metadataBinder, IRequestHistory requestHistory, IRequestManager requestManager, TimeTweeningManager tweeningManager, LevelSelectionNavigationController levelSelectionNavigationController)
         {
             _config = config;
             _container = container;
