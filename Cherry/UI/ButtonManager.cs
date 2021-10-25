@@ -100,7 +100,7 @@ namespace Cherry.UI
                     return;
                 }
                 var history = await _requestHistory.History();
-                DefaultColor = history.Any(r => !r.WasPlayed) ? Color.white : _emptyColor;
+                DefaultColor = history.Any(r => !r.WasPlayed && r.RequestTime >= DateTime.Now.AddHours(-_config.SesssionLengthInHours)) ? Color.white : _emptyColor;
             }
             catch (Exception e)
             {
