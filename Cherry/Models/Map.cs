@@ -34,7 +34,7 @@ namespace Cherry.Models
         public Version[] Versions { get; set; }
 
         [JsonIgnore]
-        public Version LatestVersion => Versions[0];
+        public Version LatestVersion => Versions.LastOrDefault();
 
         internal struct Metadata
         {
