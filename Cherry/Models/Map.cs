@@ -1,4 +1,5 @@
 ﻿using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using System;
 using System.Linq;
 
@@ -34,7 +35,7 @@ namespace Cherry.Models
         public Version[] Versions { get; set; }
 
         [JsonIgnore]
-        public Version LatestVersion => Versions[0];
+        public Version LatestVersion => Versions.LastOrDefault();
 
         internal struct Metadata
         {
@@ -84,6 +85,14 @@ namespace Cherry.Models
             public string Name { get; set; }
         }
 
+        internal enum State
+        {
+            Uploaded,
+            Testplay,
+            Published,
+            Feedback
+        }
+
         internal struct Version
         {
 
@@ -98,6 +107,10 @@ namespace Cherry.Models
 
             [JsonProperty("hash")]
             public string Hash { get; set; }
+
+            [JsonProperty("state")]
+            [JsonConverter(typeof(StringEnumConverter))]
+            public State State { get; set; }
 
             [JsonIgnore]
             private float? _min;

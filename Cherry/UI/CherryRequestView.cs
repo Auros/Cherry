@@ -212,7 +212,7 @@ namespace Cherry.UI
                 durationInSeconds
             );
             _requestPanelView.SetSkipButtonInteractability(!_isInHistory);
-            bool levelInstalled = _cherryLevelManager.LevelIsInstalled(request.map.LatestVersion.Hash);
+            bool levelInstalled = _cherryLevelManager.LevelIsInstalled(request.map.LatestVersion.Hash, request.map.LatestVersion.State != Map.State.Published);
             if (levelInstalled)
             {
                 _requestPanelView.SetPlayButtonColor(null);
@@ -261,7 +261,7 @@ namespace Cherry.UI
             {
                 var map = _lastSelectedCellInfo.map;
                 var request = _lastSelectedCellInfo.request;
-                IPreviewBeatmapLevel? level = _cherryLevelManager.TryGetLevel(map.LatestVersion.Hash);
+                IPreviewBeatmapLevel? level = _cherryLevelManager.TryGetLevel(map.LatestVersion.Hash, map.LatestVersion.State != Map.State.Published);
                 if (level != null)
                 {
                     RemoveAndReloadLatest();
@@ -293,7 +293,7 @@ namespace Cherry.UI
             _requestPanelView.SetPlayButtonText("Fetching...");
             try
             {
-                level = await _cherryLevelManager.DownloadLevel($"{cell.map.Key} ({cell.map.MapMetadata.SongName} - {cell.map.Uploader.Name})", cell.map.LatestVersion.Hash, cell.map.LatestVersion.DownloadURL, _downloadCancelSource.Token, progress);
+                level = await _cherryLevelManager.DownloadLevel($"{cell.map.Key} ({cell.map.MapMetadata.SongName} - {cell.map.Uploader.Name})", cell.map.LatestVersion.Hash, cell.map.LatestVersion.DownloadURL, cell.map.LatestVersion.State, _downloadCancelSource.Token, progress);
             }
             catch (Exception e)
             {
