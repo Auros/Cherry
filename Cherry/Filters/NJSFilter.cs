@@ -20,7 +20,7 @@ namespace Cherry.Filters
             {
                 if (subject.LatestVersion.MinNJS <= _config.MinNJS)
                     return Task.FromResult(new FilterResult(true));
-                return Task.FromResult(new FilterResult(false, $"NJS is too low! Minimum: {_config.MaxNJS}"));
+                return Task.FromResult(new FilterResult(false, $"NJS is too low! Minimum: {_config.MinNJS}"));
             }
             if (_config.DoMaxNJS)
             {
