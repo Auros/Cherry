@@ -1,16 +1,14 @@
-﻿using ChatCore;
-using ChatCore.Interfaces;
-using ChatCore.Models.Twitch;
-using ChatCore.Services.Twitch;
+﻿using CatCore;
+using CatCore.Models.Twitch;
+using CatCore.Models.Twitch.IRC;
+using CatCore.Services.Twitch.Interfaces;
 using Cherry.Interfaces;
 using Cherry.Models;
-using IPA.Utilities;
-using SiraUtil.Tools;
+using SiraUtil.Logging;
 using SiraUtil.Zenject;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
-using System.Threading;
 using System.Threading.Tasks;
 
 namespace Cherry.Managers
@@ -19,15 +17,14 @@ namespace Cherry.Managers
     {
         public event EventHandler<RequestEventArgs>? SongRequested;
         public event EventHandler<RequestEventArgs>? RequestCancelled;
-        private static readonly FieldAccessor<TwitchService, IWebSocketService>.Accessor ServiceSocket = FieldAccessor<TwitchService, IWebSocketService>.GetAccessor("_websocketService");
 
         private readonly Config _config;
         private readonly SiraLog _siraLog;
-        private readonly ChatCoreInstance _chatCoreInstance;
+        private readonly CatCoreInstance _chatCoreInstance;
         private readonly Dictionary<string, RequestEventArgs> _lazyTinyRequestCache = new Dictionary<string, RequestEventArgs>();
-        private TwitchService? _twitchService;
+        private ITwitchService? _twitchService;
 
-        public TwitchRequestSource(Config config, SiraLog siraLog, UBinder<Plugin, ChatCoreInstance> chatCoreInstance)
+        public TwitchRequestSource(Config config, SiraLog siraLog, UBinder<Plugin, CatCoreInstance> chatCoreInstance)
         {
             _config = config;
             _siraLog = siraLog;
@@ -38,30 +35,11 @@ namespace Cherry.Managers
         {
             _twitchService = _chatCoreInstance.RunTwitchServices();
             _twitchService.OnTextMessageReceived += ChatMessageReceived;
-
-            if (!ServiceSocket(ref _twitchService).IsConnected)
-            {
-                // the black magic bit from eris
-                SemaphoreSlim semaphoreSlim = new SemaphoreSlim(0, 1);
-                void Release(IChatService _)
-                {
-                    _twitchService.OnLogin -= Release;
-                    semaphoreSlim?.Release();
-                }
-                try
-                {
-                    _twitchService.OnLogin += Release;
-                    await semaphoreSlim.WaitAsync(CancellationToken.None);
-                }
-                catch (Exception e)
-                {
-                    _siraLog.Error(e);
-                    Release(null!);
-                }
-            }
+            while (!_twitchService.LoggedIn)
+                await Task.Yield();
         }
 
-        private void ChatMessageReceived(IChatService service, IChatMessage message)
+        private void ChatMessageReceived(ITwitchService service, TwitchMessage message)
         {
             if (message.Message.StartsWith(_config.RequestCommand))
             {
@@ -124,26 +102,26 @@ namespace Cherry.Managers
 
         public void SendMessage(object sender, string message)
         {
-            if (sender is IChatChannel channel)
+            if (sender is TwitchChannel channel)
             {
                 if (!_config.AddTwitchTTSPrefix)
-                    _twitchService?.SendTextMessage(message, channel);
+                    channel.SendMessage(message);
                 else
-                    _twitchService?.SendTextMessage($"! {message}", channel);
+                    channel?.SendMessage($"! {message}");
             }
         }
 
         private class TwitchSender : DynamicSender
         {
-            private readonly IChatChannel _channel;
+            private readonly TwitchChannel _channel;
             private readonly ICherryRequestSource _source;
 
-            public TwitchSender(IChatChannel channel, ICherryRequestSource source)
+            public TwitchSender(TwitchChannel channel, ICherryRequestSource source)
             {
                 _source = source;
                 _channel = channel;
             }
-            
+
             public override void SendMessage(string text)
             {
                 _source.SendMessage(_channel, text);

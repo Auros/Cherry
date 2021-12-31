@@ -6,7 +6,7 @@ using Cherry.Managers;
 using Cherry.Models;
 using HMUI;
 using IPA.Utilities;
-using SiraUtil.Tools;
+using SiraUtil.Logging;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -121,7 +121,7 @@ namespace Cherry.UI
             _requestPanelView.SkipButtonClicked += SkipButtonClicked;
             _requestPanelView.QueueButtonClicked += QueueButtonClicked;
             _requestPanelView.HistoryButtonClicked += HistoryButtonClicked;
-            
+
             _requestDetailView.BanSongButtonClicked += BanSong;
             _requestDetailView.BanSessionButtonClicked += BanUserSession;
             _requestDetailView.BanForeverButtonClicked += BanUserForever;
@@ -287,7 +287,7 @@ namespace Cherry.UI
         private async Task DownloadRequest(RequestCellInfo cell)
         {
             _downloadCancelSource = new CancellationTokenSource();
-            Progress<double> progress = new Progress<double>();
+            Progress<float> progress = new Progress<float>();
             progress.ProgressChanged += Progress_ProgressChanged;
             IPreviewBeatmapLevel? level = null;
             _requestPanelView.SetPlayButtonText("Fetching...");
@@ -297,7 +297,7 @@ namespace Cherry.UI
             }
             catch (Exception e)
             {
-                _siraLog.Logger.Error(e);
+                _siraLog.Error(e);
             }
             _downloadCancelSource = null;
             progress.ProgressChanged -= Progress_ProgressChanged;
@@ -323,7 +323,7 @@ namespace Cherry.UI
             ResetSubPanels();
         }
 
-        private void Progress_ProgressChanged(object sender, double value)
+        private void Progress_ProgressChanged(object sender, float value)
         {
             _requestPanelView.SetPlayButtonText($"Downloading...\n{string.Format("{0:0%}", value)}");
         }
@@ -444,7 +444,7 @@ namespace Cherry.UI
                     _isProcessing = false;
                     return;
                 }
-                
+
                 Map map = mapq.Value;
                 Sprite coverSprite = await _webImageAsyncLoader.LoadSpriteAsync(map.LatestVersion.CoverURL, CancellationToken.None);
                 RequestCellInfo cell = new RequestCellInfo(e, map, coverSprite);
@@ -458,7 +458,7 @@ namespace Cherry.UI
             catch (Exception ex)
             {
                 _siraLog.Error("An error has occured.");
-                _siraLog.Logger.Error(ex);
+                _siraLog.Error(ex);
             }
             _isProcessing = false;
         }

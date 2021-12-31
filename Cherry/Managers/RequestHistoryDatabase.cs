@@ -2,7 +2,7 @@
 using Cherry.Models;
 using IPA.Utilities;
 using Newtonsoft.Json;
-using SiraUtil.Tools;
+using SiraUtil.Logging;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -59,7 +59,7 @@ namespace Cherry.Managers
         {
             _ = SongRequestedCallbackAsync(e);
         }
-        
+
         private async Task SongAcceptedCallbackAsync(RequestEventArgs e)
         {
             await History();
@@ -82,7 +82,7 @@ namespace Cherry.Managers
                 Modifiers = e.Modifiers,
                 Difficulty = e.Difficulty,
                 RequestTime = e.RequestTime,
-                Requester = new GenericRequester(e.Requester.ID, e.Requester.Username, e. Requester.Elevation)
+                Requester = new GenericRequester(e.Requester.ID, e.Requester.Username, e.Requester.Elevation)
             });
             await Task.Run(Save);
         }
@@ -127,7 +127,7 @@ namespace Cherry.Managers
                 catch (Exception e)
                 {
                     _siraLog.Error("Error occured while deserializing the cache.");
-                    _siraLog.Logger.Error(e);
+                    _siraLog.Error(e);
                 }
             }
             _didLoadFileHistory = true;

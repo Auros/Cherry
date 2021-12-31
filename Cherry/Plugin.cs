@@ -2,7 +2,6 @@
 using IPA;
 using IPA.Config.Stores;
 using IPA.Loader;
-using SiraUtil;
 using SiraUtil.Attributes;
 using SiraUtil.Zenject;
 using Conf = IPA.Config.Config;
@@ -10,34 +9,23 @@ using IPALogger = IPA.Logging.Logger;
 
 namespace Cherry
 {
-    [Plugin(RuntimeOptions.DynamicInit), Slog]
+    [Plugin(RuntimeOptions.DynamicInit), Slog, NoEnableDisable]
     public class Plugin
     {
         [Init]
         public Plugin(Conf conf, IPALogger logger, Zenjector zenjector, PluginMetadata metadata)
         {
+            zenjector.UseHttpService();
+            zenjector.UseLogger(logger);
             Config config = conf.Generated<Config>();
-            zenjector.On<PCAppInit>().Pseudo(Container =>
+            zenjector.Install(Location.App, Container =>
             {
-                Container.BindLoggerAsSiraLogger(logger);
                 Container.BindInstance(config).AsSingle();
                 Container.BindInstance(new UBinder<Plugin, PluginMetadata>(metadata));
             });
-            zenjector.OnApp<CherryCoreInstaller>();
-            zenjector.OnMenu<CherryMenuInstaller>();
-            zenjector.OnApp<CherryFilterInstaller>();
-        }
-
-        [OnEnable]
-        public void OnEnable()
-        {
-
-        }
-
-        [OnDisable]
-        public void OnDisable()
-        {
-
+            zenjector.Install<CherryCoreInstaller>(Location.App);
+            zenjector.Install<CherryMenuInstaller>(Location.Menu);
+            zenjector.Install<CherryFilterInstaller>(Location.App);
         }
     }
 }

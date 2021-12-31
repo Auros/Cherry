@@ -1,4 +1,4 @@
-﻿using ChatCore;
+﻿using CatCore;
 using Cherry.Interfaces;
 using Cherry.Managers;
 using SiraUtil.Zenject;
@@ -12,7 +12,7 @@ namespace Cherry.Installers
         public override void InstallBindings()
         {
             Container.Bind(typeof(IDisposable), typeof(WebImageAsyncLoader)).To<WebImageAsyncLoader>().AsSingle();
-            Container.BindInstance(new UBinder<Plugin, ChatCoreInstance>(ChatCoreInstance.Create())).AsSingle();
+            Container.BindInstance(new UBinder<Plugin, CatCoreInstance>(CatCoreInstance.Create())).AsSingle();
             Container.BindInterfacesTo<RequestHistoryDatabase>().AsSingle();
             Container.BindInterfacesTo<CherryRequestManager>().AsSingle();
             Container.BindInterfacesTo<TwitchRequestSource>().AsSingle();

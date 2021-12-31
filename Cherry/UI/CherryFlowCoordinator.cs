@@ -1,7 +1,7 @@
 ﻿using BeatSaberMarkupLanguage;
 using HMUI;
 using IPA.Utilities;
-using SiraUtil.Tools;
+using SiraUtil.Logging;
 using Zenject;
 
 namespace Cherry.UI
