@@ -138,7 +138,7 @@ namespace Cherry.UI
 
         private ClickableImage CreateImage()
         {
-            GameObject gameObject = new GameObject("ClickyCherryIcon");
+            GameObject gameObject = new GameObject("Cherry Icon");
             ClickableImage image = gameObject.AddComponent<ClickableImage>();
             image.material = BeatSaberMarkupLanguage.Utilities.ImageResources.NoGlowMat;
 
