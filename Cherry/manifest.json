@@ -10,6 +10,6 @@
     "BSIPA": "^4.1.4",
     "SongCore": "^3.0.0",
     "SiraUtil": "^3.0.0",
-    "CatCore": "^0.0.1-alpha"
+    "CatCore": "^1.0.0"
   }
 }
