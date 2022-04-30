@@ -53,7 +53,8 @@
 			<Private>False</Private>
 		</Reference>
 		<Reference Include="CatCore">
-		  <HintPath>C:\Program Files (x86)\Steam\steamapps\common\Beat Saber\Libs\CatCore.dll</HintPath>
+			<HintPath>$(BeatSaberDir)\Libs\CatCore.dll</HintPath>
+			<Private>False</Private>
 		</Reference>
 		<Reference Include="GameplayCore">
 			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\GameplayCore.dll</HintPath>
