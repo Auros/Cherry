@@ -3,13 +3,13 @@
   "id": "Cherry",
   "name": "Cherry",
   "author": "Auros",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A lightweight chat-based song request mod.",
-  "gameVersion": "1.19.0",
+  "gameVersion": "1.21.0",
   "dependsOn": {
     "BSIPA": "^4.1.4",
     "SongCore": "^3.0.0",
     "SiraUtil": "^3.0.0",
-    "CatCore": "^0.0.1-alpha"
+    "CatCore": "^1.0.0"
   }
 }
