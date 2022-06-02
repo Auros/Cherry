@@ -41,7 +41,7 @@ namespace Cherry.Managers
 
         private void ChatMessageReceived(ITwitchService service, TwitchMessage message)
         {
-            if (message.Message.StartsWith(_config.RequestCommand))
+            if (message.Message.StartsWith(_config.RequestCommand, StringComparison.InvariantCultureIgnoreCase))
             {
                 string[] splitMessage = message.Message.Split(' ');
                 if (2 > splitMessage.Length)
