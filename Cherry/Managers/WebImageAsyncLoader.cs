@@ -55,6 +55,11 @@ namespace Cherry.Managers
         public void Dispose()
         {
             _cancellationTokenSource.Cancel();
+            foreach (var sprite in _spriteCache.Values)
+            {
+                UnityEngine.Object.Destroy(sprite);
+                UnityEngine.Object.Destroy(sprite.texture);
+            }
         }
     }
 }

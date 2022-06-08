@@ -72,7 +72,18 @@ namespace Cherry.Managers
             MainThreadInvoker.Invoke(() => SongRequested?.Invoke(sender, e));
             if (sender is DynamicSender callbackButCooler)
             {
-                callbackButCooler.SendMessage($"Added {map.Value.Name} uploaded by {map.Value.Uploader.Name} ({map.Value.Key}) to the queue.");
+                var template = _config.ActiveRequestMessageTemplate;
+                
+                if (Utilities.HasDangerousMessageTemplateProperty(template) && !_config.AllowDangerousTemplateProperties)
+                    template = Config.DefaultRequestMessageTemplate;
+
+                Templater templater = new Templater(template);
+                templater.AddReplacer("key", map.Value.Key);
+                templater.AddReplacer("map.name", map.Value.Name);
+                templater.AddReplacer("map.uploader.name", map.Value.Uploader.Name);
+                templater.AddReplacer("requester.mention", "@" + e.Requester.Username);
+
+                callbackButCooler.SendMessage(templater.Build());
             }
         }
 

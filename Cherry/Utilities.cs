@@ -56,5 +56,8 @@ namespace Cherry
         {
             return _colorGradient.Evaluate(value);
         }
+
+        public static bool HasDangerousMessageTemplateProperty(string template)
+            => template.Contains(".name%") || template.Contains(".mention%");
     }
 }

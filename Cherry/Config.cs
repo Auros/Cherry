@@ -64,6 +64,20 @@ namespace Cherry
         public virtual float MinNJS { get; set; } = 10f;
         public virtual float MaxNJS { get; set; } = 20f;
 
+        public const string DefaultRequestMessageTemplate = "Added %key% to the queue.";
+        public virtual string ActiveRequestMessageTemplate { get; set; } = DefaultRequestMessageTemplate;
+
+        [NonNullable, UseConverter(typeof(ListConverter<string>))]
+        public virtual List<string> RequestMessageTemplates { get; set; } = new List<string>()
+        {
+            "Added %key% to the queue.",
+            "Added %key% requested by %requester.mention% to the queue.",
+            "Added %key% uploaded by %map.uploader.name% to the queue.",
+            "Added %map.name% uploaded by %map.uploader.name% (%key%) to the queue."
+        };
+
+        public virtual bool AllowDangerousTemplateProperties { get; set; } = false;
+
         public class UserBan
         {
             public virtual string ID { get; set; } = null!;
