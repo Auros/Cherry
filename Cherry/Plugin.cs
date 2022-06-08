@@ -18,6 +18,9 @@ namespace Cherry
             zenjector.UseHttpService();
             zenjector.UseLogger(logger);
             Config config = conf.Generated<Config>();
+
+            config.Version = metadata.HVersion;
+
             zenjector.Install(Location.App, Container =>
             {
                 Container.BindInstance(config).AsSingle();

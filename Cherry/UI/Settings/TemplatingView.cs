@@ -1,5 +1,6 @@
 ﻿using BeatSaberMarkupLanguage.Attributes;
 using System.ComponentModel;
+using UnityEngine;
 
 namespace Cherry.UI.Settings
 {
@@ -49,7 +50,7 @@ namespace Cherry.UI.Settings
         [UIAction("open-templating-docs")]
         protected void OpenTemplatingDocs()
         {
-
+            Application.OpenURL("https://github.com/Auros/Cherry/blob/main/README.md#templating");
         }
 
         private string BuildFormatColor(int index) => Utilities.HasDangerousMessageTemplateProperty(_config.RequestMessageTemplates[index]) ? "e05e26" : "ffffff";

@@ -1,6 +1,7 @@
 ﻿using IPA.Config.Stores;
 using IPA.Config.Stores.Attributes;
 using IPA.Config.Stores.Converters;
+using SiraUtil.Converters;
 using System;
 using System.Collections.Generic;
 using System.Runtime.CompilerServices;
@@ -11,6 +12,9 @@ namespace Cherry
     internal class Config
     {
         public event Action<Config>? Updated;
+
+        [NonNullable, UseConverter(typeof(VersionConverter))]
+        public virtual Hive.Versioning.Version Version { get; set; } = new Hive.Versioning.Version(0, 0, 0);
 
         public virtual bool QueueOpened { get; set; } = false;
         public virtual string RequestCommand { get; set; } = "!bsr";    
