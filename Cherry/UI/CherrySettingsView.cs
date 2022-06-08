@@ -94,12 +94,16 @@ namespace Cherry.UI
         [UIValue("twitch-host")]
         protected Settings.TwitchView _twitchView = null!;
 
+        [UIValue("templating-host")]
+        protected Settings.TemplatingView _templatingView = null!;
+
         [Inject]
         public void Construct(Config config, DiContainer container)
         {
             _config = config;
             _ageView = container.Instantiate<Settings.AgeView>();
             _twitchView = container.Instantiate<Settings.TwitchView>();
+            _templatingView = container.Instantiate<Settings.TemplatingView>();
         }
 
         [UIAction("rating-formatter")]

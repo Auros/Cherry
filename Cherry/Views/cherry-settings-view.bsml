@@ -49,6 +49,24 @@
         <bool-setting text="Mod Limits" value="mod" apply-on-change="true" />
         <increment-setting text="Max Requests" integer-only="true" pref-width="80" value="mod-requests" apply-on-change="true" min="1" />
       </macro.as-host>
+        
+      <div size-delta-y="5" />
+
+      <macro.as-host host="templating-host">
+        <vertical pref-width="90" pref-height="21" horizontal-fit="PreferredSize" vertical-fit="PreferredSize">
+          <text text="Request Message Templating" underlined="true" font-size="5" />
+          <text text="People with malicious intent will sometimes intentionally request songs with key words which will get the streamer banned or suspended on Twitch. &lt;u&gt;Please be aware that turning this option on exposes you to that risk.&lt;/u&gt; Options that are &lt;color=#e05e26&gt;orange&lt;/color&gt; will not work if you have this toggle off." font-size="2.9" italics="true" color="grey" />
+        </vertical>
+        <bool-setting text="Allow Dangerous Template Properties" value="allow-dangerous-template-properties" apply-on-change="true" color="#e01212" />
+        <increment-setting text="Template" value="selected-template" min="0" max="~template-limit" formatter="template-formatter" apply-on-change="true" rich-text="true" integer-only="true"></increment-setting>
+        <vertical pref-width="90" pref-height="12" horizontal-fit="PreferredSize" vertical-fit="PreferredSize">
+          <text text="  Preview" font-size="3.5" />
+          <text text="~formatted-template" font-size="2.9" italics="true" color="grey" />
+        </vertical>
+        <button text="Templating Documentation (Opens In Browser)" hover-hint="Learn more about the templating system here. This opens a URL in your browser to GitHub" />
+      </macro.as-host>
+
+      
     </scroll-view>
   </vertical>
 </bg>
