@@ -136,6 +136,7 @@ namespace Cherry.UI
                 ResetSubPanels();
                 _isDirty = false;
             }
+            _requestManager.HasNewRequests = false;
         }
 
         [UIAction("#post-parse")]
@@ -422,6 +423,8 @@ namespace Cherry.UI
 
         private void SongRequested(object sender, RequestEventArgs e)
         {
+            if (_isActivated)
+                _requestManager.HasNewRequests = false;
             _requestLoadingQueue.Enqueue(e);
         }
 

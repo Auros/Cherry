@@ -91,6 +91,13 @@ namespace Cherry.UI
             set => _config.MaxSongLengthInMinutes = value;
         }
 
+        [UIValue("unseen-request-flicker")]
+        protected bool UnseenRequestFlicker
+        {
+            get => _config.BlinkCherryForUnseenRequests;
+            set => _config.BlinkCherryForUnseenRequests = value;
+        }
+
         [UIValue("twitch-host")]
         protected Settings.TwitchView _twitchView = null!;
 

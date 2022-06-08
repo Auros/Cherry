@@ -37,6 +37,10 @@
       <increment-setting text="Maximum NJS" pref-width="80" value="max-njs" apply-on-change="true" min="0.5" increment="0.5" />
       
       <div size-delta-y="5" />
+
+      <bool-setting text="Flicker Cherry Button For Unseen Requests" value="unseen-request-flicker" apply-on-change="true" />
+
+      <div size-delta-y="5" />
       
       <macro.as-host host="twitch-host">
         <bool-setting text="Add ! for TTS" value="tts-prefix" apply-on-change="true" />
@@ -63,7 +67,7 @@
           <text text="  Preview" font-size="3.5" />
           <text text="~formatted-template" font-size="2.9" italics="true" color="grey" />
         </vertical>
-        <button text="Templating Documentation (Opens In Browser)" hover-hint="Learn more about the templating system here. This opens a URL in your browser to GitHub" />
+        <button text="Templating Documentation (Opens In Browser)" hover-hint="Learn more about the templating system here. This opens a URL in your browser to GitHub" on-click="open-templating-docs" />
       </macro.as-host>
 
       

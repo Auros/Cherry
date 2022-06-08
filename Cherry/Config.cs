@@ -76,7 +76,9 @@ namespace Cherry
             "Added %map.name% uploaded by %map.uploader.name% (%key%) to the queue."
         };
 
-        public virtual bool AllowDangerousTemplateProperties { get; set; } = false;
+        public virtual bool AllowDangerousTemplateProperties { get; set; }
+
+        public virtual bool BlinkCherryForUnseenRequests { get; set; }
 
         public class UserBan
         {

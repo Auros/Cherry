@@ -46,6 +46,12 @@ namespace Cherry.UI.Settings
         [UIAction("template-formatter")]
         protected string FormatTemplate(int index) => $"<color=#{BuildFormatColor(index)}>Option {index + 1}</color>";
 
+        [UIAction("open-templating-docs")]
+        protected void OpenTemplatingDocs()
+        {
+
+        }
+
         private string BuildFormatColor(int index) => Utilities.HasDangerousMessageTemplateProperty(_config.RequestMessageTemplates[index]) ? "e05e26" : "ffffff";
 
         private static Templater BuildExampleTemplater(string template)

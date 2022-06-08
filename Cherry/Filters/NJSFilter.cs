@@ -1,6 +1,5 @@
 ﻿using Cherry.Interfaces;
 using Cherry.Models;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Cherry.Filters

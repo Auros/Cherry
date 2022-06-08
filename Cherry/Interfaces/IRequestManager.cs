@@ -9,6 +9,8 @@ namespace Cherry.Interfaces
         event EventHandler<RequestEventArgs> SongAccepted;
         event EventHandler<RequestEventArgs> SongRequested;
 
+        public bool HasNewRequests { get; set; }
+
         void Remove(RequestEventArgs request);
         void MarkAsRead(RequestEventArgs request);
     }

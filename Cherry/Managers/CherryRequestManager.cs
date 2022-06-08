@@ -18,6 +18,8 @@ namespace Cherry.Managers
         private readonly List<ICherryRequestSource> _cherryRequestSource;
         private readonly CancellationTokenSource _cancellationTokenSource;
 
+        public bool HasNewRequests { get; set; }
+
         public event EventHandler<RequestEventArgs>? SongSkipped;
         public event EventHandler<RequestEventArgs>? SongAccepted;
         public event EventHandler<RequestEventArgs>? SongRequested;
@@ -68,6 +70,7 @@ namespace Cherry.Managers
                     }
                 }
             }
+            HasNewRequests = true;
             _siraLog.Debug($"{map.Value.Name} has been requested by {e.Requester.Username}.");
             MainThreadInvoker.Invoke(() => SongRequested?.Invoke(sender, e));
             if (sender is DynamicSender callbackButCooler)

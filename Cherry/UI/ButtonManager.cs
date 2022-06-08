@@ -2,6 +2,7 @@
 using Cherry.Interfaces;
 using Cherry.Models;
 using IPA.Loader;
+using SiraUtil.Logging;
 using SiraUtil.Zenject;
 using System;
 using System.IO;
@@ -17,7 +18,7 @@ using Zenject;
 
 namespace Cherry.UI
 {
-    internal class ButtonManager : IInitializable, IDisposable
+    internal class ButtonManager : IInitializable, IDisposable, ITickable
     {
         private bool _lastQueueValue;
         private ClickableImage? _image;
@@ -30,6 +31,12 @@ namespace Cherry.UI
         private readonly TweeningManager _tweeningManager;
         private readonly LevelSelectionNavigationController _levelSelectionNavigationController;
         private static readonly Color _emptyColor = new Color(0.15f, 0f, 0f, 1f);
+
+        private bool _flickerState;
+        private float _flickerCycleTime;
+        private const float _flickerCycleSpeed = 0.45f;
+
+        public bool DisableAnimation => _config.BlinkCherryForUnseenRequests && _requestManager.HasNewRequests;
 
         public Color? DefaultColor
         {
@@ -45,11 +52,19 @@ namespace Cherry.UI
             {
                 if (_image != null && value.HasValue)
                 {
-                    Color oldColor = _image.color;
-                    _tweeningManager.KillAllTweens(_image);
-                    var tween = new FloatTween(0f, 1f, val => _image!.color = Color.Lerp(oldColor, value.Value, val), 1f, EaseType.InOutSine);
-                    _tweeningManager.AddTween(tween, _image);
-                    tween.onCompleted = delegate () { _image!.DefaultColor = value.Value; };
+
+                    if (DisableAnimation)
+                    {
+                        _image.color = value.Value;
+                    }
+                    else
+                    {
+                        Color oldColor = _image.color;
+                        _tweeningManager.KillAllTweens(_image);
+                        var tween = new FloatTween(0f, 1f, val => _image!.color = Color.Lerp(oldColor, value.Value, val), 1f, EaseType.InOutSine);
+                        _tweeningManager.AddTween(tween, _image);
+                        tween.onCompleted = delegate () { _image!.DefaultColor = value.Value; };
+                    }
                 }
             }
         }
@@ -119,6 +134,10 @@ namespace Cherry.UI
             _image.sprite = BeatSaberMarkupLanguage.Utilities.LoadSpriteRaw(ms.ToArray());
             _image.sprite.texture.wrapMode = TextureWrapMode.Clamp;
             RequestManager_SongStateChange(null!, null!);
+
+
+            var history = await _requestHistory.History();
+            _requestManager.HasNewRequests = history.Any(r => !r.WasPlayed && r.RequestTime >= DateTime.Now.AddHours(-_config.SesssionLengthInHours));
         }
 
         public void Dispose()
@@ -128,7 +147,11 @@ namespace Cherry.UI
             _requestManager.SongSkipped -= RequestManager_SongStateChange;
             _config.Updated -= Config_Updated;
             if (_image != null)
+            {
                 _image.OnClickEvent -= Clicked;
+                UnityEngine.Object.Destroy(_image.sprite);
+                UnityEngine.Object.Destroy(_image.sprite.texture);
+            }
         }
 
         private void Clicked(PointerEventData _)
@@ -156,6 +179,20 @@ namespace Cherry.UI
             _container.InstantiateComponent<VRGraphicRaycaster>(gameObject);
 
             return image;
+        }
+
+        public void Tick()
+        {
+            if (!_config.BlinkCherryForUnseenRequests || !_requestManager.HasNewRequests)
+                return;
+
+            _flickerCycleTime += Time.deltaTime;
+            if (_flickerCycleSpeed > _flickerCycleTime)
+                return;
+
+            _flickerCycleTime = 0;
+            DefaultColor = _flickerState ? Color.white : _emptyColor;
+            _flickerState = !_flickerState;
         }
     }
 }
