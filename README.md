@@ -37,4 +37,6 @@ This means, people have to enter !bsr (key). This mod does not search by song na
   * `%map.uploader.name%`: The name of the person who uploaded the map
   * `%map.name%`: The name of the map
   
-  You can easily add your own formats by editing the config file at `Beat Saber/UserData/Cherry.json`. In the "RequestMessageTemplates" field, add a new line with your desired template type.
+  You can add your own formats by editing the config file at `Beat Saber/UserData/Cherry.json`. In the "RequestMessageTemplates" field, add a new line with your desired template type.
+  
+  (Make sure its valid JSON if you dont want to nuke your entire config haha) 
