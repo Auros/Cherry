@@ -1,16 +1,58 @@
 name: Build
 
 on:
-  push:
-  pull_request:
   workflow_dispatch:
+    inputs:
+      base_version:
+        description: Beat Saber base version to build
+        required: true
+        default: All
+        type: choice
+        options:
+          - All
+          - 1.29.0
+          - 1.37.1
+          - 1.38.0
+          - 1.40.0
+          - 1.42.0
 
 permissions:
   contents: read
 
 jobs:
-  build:
+  plan:
     runs-on: ubuntu-22.04
+    outputs:
+      versions: ${{ steps.plan.outputs.versions }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Plan build matrix
+        id: plan
+        run: |
+          selected="${{ inputs.base_version }}"
+          if [ -z "$selected" ] || [ "$selected" = "All" ]; then
+            matrix="$(jq -c '.versions' .github/version-matrix.json)"
+          else
+            matrix="$(jq -c --arg selected "$selected" '[.versions[] | select(.base == $selected)]' .github/version-matrix.json)"
+          fi
+
+          if [ "$matrix" = "[]" ]; then
+            echo "Unsupported base version: $selected" >&2
+            exit 1
+          fi
+
+          echo "versions=$matrix" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: plan
+    name: Build (${{ matrix.base }})
+    runs-on: ubuntu-22.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJson(needs.plan.outputs.versions) }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v5
@@ -20,22 +62,41 @@ jobs:
         with:
           dotnet-version: 8.0.x
 
-      - name: Read game version
-        id: game
+      - name: Read build configuration
+        id: build
         run: |
-          manifest="Cherry/manifest.json"
+          base_version="${{ matrix.base }}"
+          stripped_refs_version="$base_version"
+          if [ "$base_version" = "1.29.0" ]; then
+            stripped_refs_version="1.29.1"
+          fi
+
+          manifest="Cherry/Manifests/$base_version/manifest.json"
           if [ ! -f "$manifest" ]; then
-            echo "Missing $manifest" >&2
+            manifest="Cherry/manifest.json"
+          fi
+
+          game_version="$(jq -er '.gameVersion | select(type == "string" and length > 0)' "$manifest")"
+          plugin_version="$(jq -er '.version | select(type == "string" and length > 0)' "$manifest")"
+          if [ "$game_version" != "$base_version" ]; then
+            echo "$manifest targets Beat Saber $game_version instead of $base_version" >&2
+            exit 1
+          fi
+          if ! grep -Fq "BS$base_version" Cherry/Cherry.csproj; then
+            echo "Cherry.csproj does not define a build platform for Beat Saber $base_version" >&2
             exit 1
           fi
 
-          version="$(jq -er '.gameVersion | select(type == "string" and length > 0)' "$manifest")"
-          if ! grep -Fq "BS$version" Cherry/Cherry.csproj; then
-            echo "Cherry.csproj does not define a build platform for Beat Saber $version" >&2
-            exit 1
-          fi
+          compatible_versions='${{ toJson(matrix.compatible) }}'
+          artifact_game_version="$(echo "$compatible_versions" | jq -r '.[0] + "-to-" + .[-1]')"
+          short_sha="$(echo "$GITHUB_SHA" | cut -c1-7)"
+          artifact_name="Cherry-v$plugin_version-bs$artifact_game_version-$short_sha"
 
-          echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "base_version=$base_version" >> "$GITHUB_OUTPUT"
+          echo "stripped_refs_version=$stripped_refs_version" >> "$GITHUB_OUTPUT"
+          echo "game_version=$game_version" >> "$GITHUB_OUTPUT"
+          echo "manifest=$manifest" >> "$GITHUB_OUTPUT"
+          echo "artifact_name=$artifact_name" >> "$GITHUB_OUTPUT"
 
       - name: Checkout stripped dlls
         uses: actions/checkout@v5
@@ -44,30 +105,24 @@ jobs:
           ssh-key: ${{ secrets.CI_SSH_KEY }}
           path: Stripped
           sparse-checkout: |
-            Versions/${{ steps.game.outputs.version }}
+            Versions/${{ steps.build.outputs.stripped_refs_version }}
           sparse-checkout-cone-mode: false
 
       - name: Prepare game references
         run: |
-          source="Stripped/Versions/${{ steps.game.outputs.version }}"
+          source="Stripped/Versions/${{ steps.build.outputs.stripped_refs_version }}"
           if [ ! -d "$source" ] || [ -z "$(find "$source" -mindepth 1 -print -quit)" ]; then
-            echo "Stripped references are missing for Beat Saber ${{ steps.game.outputs.version }}" >&2
+            echo "Stripped references are missing for Beat Saber ${{ steps.build.outputs.stripped_refs_version }}" >&2
             exit 1
           fi
 
           mv "$source" Refs
-          for directory in "Beat Saber_Data/Managed" Libs; do
-            if [ ! -d "Refs/$directory" ]; then
-              echo "Stripped references are missing Refs/$directory" >&2
-              exit 1
-            fi
-          done
 
       - name: Acquire mod references
         shell: pwsh
         run: |
-          $gameVersion = "${{ steps.game.outputs.version }}"
-          $manifest = Get-Content "Cherry/manifest.json" -Raw | ConvertFrom-Json
+          $gameVersion = "${{ steps.build.outputs.game_version }}"
+          $manifest = Get-Content "${{ steps.build.outputs.manifest }}" -Raw | ConvertFrom-Json
           $dependencies = @($manifest.dependsOn.PSObject.Properties.Name)
           $response = Invoke-RestMethod -Uri "https://beatmods.com/api/mods?gameVersion=$gameVersion&status=verified"
 
@@ -86,6 +141,7 @@ jobs:
         run: |
           references=(
             "Refs/Beat Saber_Data/Managed/Main.dll"
+            "Refs/Beat Saber_Data/Managed/netstandard.dll"
             "Refs/Beat Saber_Data/Managed/IPA.Loader.dll"
             "Refs/Plugins/BSML.dll"
             "Refs/Plugins/SiraUtil.dll"
@@ -106,8 +162,8 @@ jobs:
         run: |
           dotnet build Cherry.sln \
             --configuration Release \
-            -p:Platform="BS${{ steps.game.outputs.version }}" \
-            -p:CherryTargetVersion="${{ steps.game.outputs.version }}" \
+            -p:Platform="BS${{ steps.build.outputs.base_version }}" \
+            -p:CherryTargetVersion="${{ steps.build.outputs.base_version }}" \
             -p:LocalRefsDir="${{ github.workspace }}/Refs" \
             -p:GameReferences="${{ github.workspace }}/Refs" \
             -p:DisableCopyToGame=True \
@@ -116,7 +172,7 @@ jobs:
       - name: Find artifact
         id: artifact
         run: |
-          output="Cherry/bin/${{ steps.game.outputs.version }}/Release"
+          output="Cherry/bin/${{ steps.build.outputs.base_version }}/Release"
           artifact="$(find "$output" -path '*/zip/*.zip' -type f | sort | head -n 1)"
           if [ -z "$artifact" ]; then
             echo "No distributable ZIP was produced under $output" >&2
@@ -124,11 +180,14 @@ jobs:
             exit 1
           fi
 
-          echo "path=$artifact" >> "$GITHUB_OUTPUT"
+          staging="${{ runner.temp }}/${{ steps.build.outputs.artifact_name }}"
+          mkdir -p "$staging"
+          unzip -q "$artifact" -d "$staging"
+          echo "path=$staging" >> "$GITHUB_OUTPUT"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v7
         with:
-          name: Cherry-bs${{ steps.game.outputs.version }}
-          path: ${{ steps.artifact.outputs.path }}
+          name: ${{ steps.build.outputs.artifact_name }}
+          path: ${{ steps.artifact.outputs.path }}/*
           if-no-files-found: error
