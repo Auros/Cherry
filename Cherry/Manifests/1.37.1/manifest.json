@@ -3,7 +3,7 @@
   "id": "Cherry",
   "name": "Cherry",
   "author": "Auros",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "description": "A lightweight chat-based song request mod.",
   "gameVersion": "1.37.1",
   "dependsOn": {
