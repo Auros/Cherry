@@ -14,6 +14,7 @@ namespace Cherry.Managers
         private readonly Config _config;
         private readonly SiraLog _siraLog;
         private readonly MapStore _mapStore;
+        private readonly RequestKeyResolver _requestKeyResolver;
         private readonly List<IRequestFilter<Map>> _mapRequestFilters;
         private readonly List<ICherryRequestSource> _cherryRequestSource;
         private readonly CancellationTokenSource _cancellationTokenSource;
@@ -24,11 +25,12 @@ namespace Cherry.Managers
         public event EventHandler<RequestEventArgs>? SongAccepted;
         public event EventHandler<RequestEventArgs>? SongRequested;
 
-        public CherryRequestManager(Config config, SiraLog siraLog, MapStore mapStore, List<IRequestFilter<Map>> mapRequestFilters, List<ICherryRequestSource> cherryRequestSource)
+        public CherryRequestManager(Config config, SiraLog siraLog, MapStore mapStore, RequestKeyResolver requestKeyResolver, List<IRequestFilter<Map>> mapRequestFilters, List<ICherryRequestSource> cherryRequestSource)
         {
             _config = config;
             _siraLog = siraLog;
             _mapStore = mapStore;
+            _requestKeyResolver = requestKeyResolver;
             _mapRequestFilters = mapRequestFilters;
             _cherryRequestSource = cherryRequestSource;
             _cancellationTokenSource = new CancellationTokenSource();
@@ -46,47 +48,62 @@ namespace Cherry.Managers
 
         private async Task RequestReceivedAsync(object sender, RequestEventArgs e)
         {
-            Map? map = await _mapStore.GetMapAsync(e.Key);
-            if (!map.HasValue)
+            var callback = sender as DynamicSender;
+            try
             {
-                if (sender is DynamicSender callback)
+                var key = await _requestKeyResolver.ResolveAsync(e.Key, _cancellationTokenSource.Token);
+                if (key == null)
                 {
-                    callback.SendMessage($"Map ({e.Key}) does not exist.");
+                    callback?.SendMessage($"Invalid map reference ({e.Key}).");
+                    return;
                 }
-                return;
-            }
-            if (e.Requester.Elevation != Power.Level4 && !(e.Requester.Elevation == Power.Level3 && _config.AllowL3FilterBypass))
-            {
-                foreach (var filter in _mapRequestFilters)
+
+                if (await _mapStore.GetMapAsync(key, _cancellationTokenSource.Token) is not Map map)
                 {
-                    FilterResult result = await filter.Resolve(map.Value, e);
-                    if (!result.IsValid)
+                    callback?.SendMessage($"Map ({key}) does not exist.");
+                    return;
+                }
+
+                var request = new RequestEventArgs(map.Key, e.Requester, e.RequestTime, e.Difficulty, e.Modifiers, e.Priority);
+                if (e.Requester.Elevation != Power.Level4 && !(e.Requester.Elevation == Power.Level3 && _config.AllowL3FilterBypass))
+                {
+                    foreach (var filter in _mapRequestFilters)
                     {
-                        if (result.Error != null && sender is DynamicSender callback)
+                        var result = await filter.Resolve(map, request);
+                        if (!result.IsValid)
                         {
-                            callback.SendMessage(result.Error);
+                            if (result.Error != null)
+                                callback?.SendMessage(result.Error);
+                            return;
                         }
-                        return;
                     }
                 }
+
+                HasNewRequests = true;
+                _siraLog.Debug($"{map.Name} has been requested by {e.Requester.Username}.");
+                MainThreadInvoker.Invoke(() => SongRequested?.Invoke(sender, request));
+                if (callback != null)
+                {
+                    var template = _config.ActiveRequestMessageTemplate;
+                    if (Utilities.HasDangerousMessageTemplateProperty(template) && !_config.AllowDangerousTemplateProperties)
+                        template = Config.DefaultRequestMessageTemplate;
+
+                    var templater = new Templater(template);
+                    templater.AddReplacer("key", map.Key);
+                    templater.AddReplacer("map.name", map.Name);
+                    templater.AddReplacer("map.uploader.name", map.Uploader.Name);
+                    templater.AddReplacer("requester.mention", "@" + e.Requester.Username);
+                    callback.SendMessage(templater.Build());
+                }
             }
-            HasNewRequests = true;
-            _siraLog.Debug($"{map.Value.Name} has been requested by {e.Requester.Username}.");
-            MainThreadInvoker.Invoke(() => SongRequested?.Invoke(sender, e));
-            if (sender is DynamicSender callbackButCooler)
+            catch (OperationCanceledException)
             {
-                var template = _config.ActiveRequestMessageTemplate;
-                
-                if (Utilities.HasDangerousMessageTemplateProperty(template) && !_config.AllowDangerousTemplateProperties)
-                    template = Config.DefaultRequestMessageTemplate;
-
-                Templater templater = new Templater(template);
-                templater.AddReplacer("key", map.Value.Key);
-                templater.AddReplacer("map.name", map.Value.Name);
-                templater.AddReplacer("map.uploader.name", map.Value.Uploader.Name);
-                templater.AddReplacer("requester.mention", "@" + e.Requester.Username);
-
-                callbackButCooler.SendMessage(templater.Build());
+            }
+            catch (Exception exception)
+            {
+                _siraLog.Error($"Failed to process map request '{e.Key}'.");
+                _siraLog.Error(exception);
+                callback?.SendMessage($"Could not process map ({e.Key}).");
             }
         }
 

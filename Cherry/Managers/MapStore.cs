@@ -41,6 +41,24 @@ namespace Cherry.Managers
             return map;
         }
 
+        public async Task<Map?> GetMapByHashAsync(string hash, CancellationToken cancellationToken)
+        {
+            hash = hash.ToLowerInvariant();
+            _siraLog.Debug($"Fetching map with hash '{hash}'.");
+            var response = await _httpService.GetAsync($"https://api.beatsaver.com/maps/hash/{hash}", cancellationToken: cancellationToken).ConfigureAwait(false);
+            if (!response.Successful)
+            {
+                _siraLog.Warn(response.Code);
+                return null;
+            }
+
+            if (DeserializeMap(await response.ReadAsStringAsync()) is not Map map)
+                return null;
+
+            _mapCache.TryAdd(map.Key.ToLowerInvariant(), map);
+            return map;
+        }
+
         private Map? DeserializeMap(string json)
         {
             var map = JsonConvert.DeserializeObject<Map>(json);

@@ -20,6 +20,7 @@ namespace Cherry.Installers
             Container.Bind<IDenier>().To<CherryDenylist>().AsSingle();
             Container.Bind<CherryLevelManager>().AsSingle();
             Container.Bind<MapStore>().AsSingle();
+            Container.Bind<RequestKeyResolver>().AsSingle();
         }
     }
 }

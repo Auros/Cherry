@@ -8,7 +8,6 @@ using SiraUtil.Logging;
 using SiraUtil.Zenject;
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.Threading.Tasks;
 
 namespace Cherry.Managers
@@ -43,16 +42,9 @@ namespace Cherry.Managers
         {
             if (message.Message.StartsWith(_config.RequestCommand, StringComparison.InvariantCultureIgnoreCase))
             {
-                string[] splitMessage = message.Message.Split(' ');
-                if (2 > splitMessage.Length)
+                var input = message.Message.Substring(_config.RequestCommand.Length).Trim();
+                if (string.IsNullOrEmpty(input))
                     return;
-
-                string key = splitMessage[1];
-                if (!int.TryParse(key, NumberStyles.HexNumber, null, out int _))
-                {
-                    SendMessage(message.Channel, "Invalid Key");
-                    return;
-                }
 
                 TwitchUser user = (message.Sender as TwitchUser)!;
 
@@ -67,7 +59,7 @@ namespace Cherry.Managers
                     elevationLevel = Power.Level1;
 
                 TwitchRequester requester = new TwitchRequester(message.Sender.Id, message.Sender.UserName, elevationLevel);
-                RequestEventArgs args = new RequestEventArgs(key, requester, DateTime.Now);
+                RequestEventArgs args = new RequestEventArgs(input, requester, DateTime.Now);
                 SongRequested?.Invoke(new TwitchSender(message.Channel, this), args);
 
                 if (_lazyTinyRequestCache.ContainsKey(message.Sender.Id))
