@@ -1,10 +1,8 @@
 ﻿using Cherry.Models;
-using IPA.Loader;
 using Newtonsoft.Json;
 using SiraUtil.Logging;
 using SiraUtil.Web;
-using SiraUtil.Zenject;
-using System.Collections.Generic;
+using System.Collections.Concurrent;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -14,32 +12,43 @@ namespace Cherry.Managers
     {
         private readonly SiraLog _siraLog;
         private readonly IHttpService _httpService;
-        private readonly Dictionary<string, Map> _mapCache;
+        private readonly ConcurrentDictionary<string, Map> _mapCache = new ConcurrentDictionary<string, Map>();
 
-        public MapStore(SiraLog siraLog, IHttpService siraClient, UBinder<Plugin, PluginMetadata> metadataBinder)
+        public MapStore(SiraLog siraLog, IHttpService httpService)
         {
             _siraLog = siraLog;
-            _httpService = siraClient;
-            _mapCache = new Dictionary<string, Map>();
+            _httpService = httpService;
         }
 
-        public async Task<Map?> GetMapAsync(string key, CancellationToken? token = null)
+        public async Task<Map?> GetMapAsync(string key, CancellationToken cancellationToken = default)
         {
-            if (!_mapCache.TryGetValue(key, out Map map))
+            key = key.ToLowerInvariant();
+            if (!_mapCache.TryGetValue(key, out var map))
             {
-                key = key.ToLowerInvariant();
                 _siraLog.Debug($"Fetching map with key '{key}'.");
-                IHttpResponse webResponse = await _httpService.GetAsync($"https://api.beatsaver.com/maps/id/{key}", cancellationToken: token).ConfigureAwait(false);
+                var webResponse = await _httpService.GetAsync($"https://api.beatsaver.com/maps/id/{key}", cancellationToken: cancellationToken).ConfigureAwait(false);
                 if (!webResponse.Successful)
                 {
                     _siraLog.Warn(webResponse.Code);
                     return null;
                 }
-                map = JsonConvert.DeserializeObject<Map>(await webResponse.ReadAsStringAsync());
-                if (!_mapCache.ContainsKey(key))
-                    _mapCache.Add(key, map);
+                if (DeserializeMap(await webResponse.ReadAsStringAsync()) is not Map fetchedMap)
+                    return null;
+
+                map = fetchedMap;
+                _mapCache.TryAdd(key, map);
             }
             return map;
+        }
+
+        private Map? DeserializeMap(string json)
+        {
+            var map = JsonConvert.DeserializeObject<Map>(json);
+            if (!string.IsNullOrWhiteSpace(map.Key) && map.Versions != null && map.Versions.Length > 0)
+                return map;
+
+            _siraLog.Warn("BeatSaver returned incomplete map data.");
+            return null;
         }
     }
 }

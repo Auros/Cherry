@@ -1,6 +1,8 @@
 ﻿using BeatSaberMarkupLanguage;
 using HMUI;
 using SiraUtil.Logging;
+using System.Linq;
+using UnityEngine;
 using Zenject;
 
 namespace Cherry.UI
@@ -18,14 +20,8 @@ namespace Cherry.UI
         private FlowCoordinator _presentingFlowCoordinator = null!;
         private MainFlowCoordinator _mainFlowCoordinator = null!;
 
-        private LevelSearchViewController _levelSearchViewController = null!;
-        private SelectLevelCategoryViewController _selectLevelCategoryViewController = null!;
-        private LevelFilteringNavigationController _levelFilteringNavigationController = null!;
-        private LevelCollectionNavigationController _levelCollectionNavigationController = null!;
-
         [Inject]
-        protected void Construct(SiraLog siraLog, ButtonManager buttonManager, OpenSettingsView openSettingsView, CherryRequestView cherryRequestView, CherrySettingsView cherrySettingsView, MainFlowCoordinator mainFlowCoordinator, LevelSearchViewController levelSearchViewController,
-                                 SelectLevelCategoryViewController selectLevelCategoryViewController, LevelFilteringNavigationController levelFilteringNavigationController, LevelCollectionNavigationController levelCollectionNavigationController)
+        protected void Construct(SiraLog siraLog, ButtonManager buttonManager, OpenSettingsView openSettingsView, CherryRequestView cherryRequestView, CherrySettingsView cherrySettingsView, MainFlowCoordinator mainFlowCoordinator)
         {
             _siraLog = siraLog;
             _buttonManager = buttonManager;
@@ -33,10 +29,6 @@ namespace Cherry.UI
             _cherryRequestView = cherryRequestView;
             _cherrySettingsView = cherrySettingsView;
             _mainFlowCoordinator = mainFlowCoordinator;
-            _levelSearchViewController = levelSearchViewController;
-            _selectLevelCategoryViewController = selectLevelCategoryViewController;
-            _levelFilteringNavigationController = levelFilteringNavigationController;
-            _levelCollectionNavigationController = levelCollectionNavigationController;
         }
 
         public override void DidActivate(bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling)
@@ -71,20 +63,29 @@ namespace Cherry.UI
         {
             _presentingFlowCoordinator.DismissFlowCoordinator(this, () =>
             {
-                var categories = _selectLevelCategoryViewController._levelCategoryInfos;
-                for (int i = 0; i < categories.Length; i++)
+                bool selected = false;
+                foreach (var controller in Active<LevelCollectionNavigationController>())
                 {
-                    if (categories[i].levelCategory == SelectLevelCategoryViewController.LevelCategory.All)
-                    {
-                        var control = _selectLevelCategoryViewController._levelFilterCategoryIconSegmentedControl;
-                        control.SelectCellWithNumber(i);
-
-                        _levelFilteringNavigationController.UpdateSecondChildControllerContent(SelectLevelCategoryViewController.LevelCategory.All);
-                        _levelCollectionNavigationController.SelectLevel(level);
-                        break;
-                    }
+                    controller.SelectLevel(level);
+                    selected = true;
                 }
+
+                foreach (var controller in Active<LevelCollectionViewController>())
+                {
+                    controller.SelectLevel(level);
+                    selected = true;
+                }
+
+                if (!selected)
+                    _siraLog.Warn("Could not find an active level collection for the requested map.");
             });
+        }
+
+        private static T[] Active<T>() where T : Component
+        {
+            return Resources.FindObjectsOfTypeAll<T>()
+                .Where(item => item != null && item.gameObject != null && item.gameObject.activeInHierarchy)
+                .ToArray();
         }
 
         protected void OnDestroy()

@@ -16,6 +16,7 @@ namespace Cherry.Installers
             Container.BindInterfacesTo<RequestHistoryDatabase>().AsSingle();
             Container.BindInterfacesTo<CherryRequestManager>().AsSingle();
             Container.BindInterfacesTo<TwitchRequestSource>().AsSingle();
+            Container.BindInterfacesAndSelfTo<RequestQueueService>().AsSingle();
             Container.Bind<IDenier>().To<CherryDenylist>().AsSingle();
             Container.Bind<CherryLevelManager>().AsSingle();
             Container.Bind<MapStore>().AsSingle();

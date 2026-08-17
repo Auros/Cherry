@@ -7,7 +7,6 @@ using Cherry.Models;
 using HMUI;
 using SiraUtil.Logging;
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -50,23 +49,18 @@ namespace Cherry.UI
 
         private bool _isDirty;
         private bool _isInHistory;
-        private bool _isProcessing;
         private Config _config = null!;
         private IDenier _denier = null!;
         private SiraLog _siraLog = null!;
-        private MapStore _mapStore = null!;
         private IRequestHistory _requestHistory = null!;
         private IRequestManager _requestManager = null!;
+        private RequestQueueService _requestQueueService = null!;
         private TweeningManager _tweeningManager = null!;
         private CherryLevelManager _cherryLevelManager = null!;
-        private WebImageAsyncLoader _webImageAsyncLoader = null!;
 
         private RequestCellInfo? _lastSelectedCellInfo;
         private CancellationTokenSource? _downloadCancelSource;
-        private List<RequestEventArgs> _skipLoadingQueue = null!;
-        private Queue<RequestEventArgs> _requestLoadingQueue = null!;
-        private Queue<RequestEventArgs> _historyLoadingQueue = null!;
-        private readonly List<RequestCellInfo> _activeRequests = new List<RequestCellInfo>();
+        private CancellationTokenSource? _historyCancelSource;
         public event Action<BeatmapLevel>? SelectLevelRequested;
 
         private readonly Color _downloadButtonColor = new Color(0.5f, 0.5f, 0.5f);
@@ -76,29 +70,21 @@ namespace Cherry.UI
         private readonly Color _closedColor1 = new Color(0.652f, 0f, 0f);
 
         [Inject]
-        protected async Task Construct(Config config, IDenier denier, SiraLog siraLog, MapStore mapStore, DiContainer container, IRequestHistory requestHistory, IRequestManager requestManager, TimeTweeningManager tweeningManager, CherryLevelManager cherryLevelManager, WebImageAsyncLoader webImageAsyncLoader)
+        protected void Construct(Config config, IDenier denier, SiraLog siraLog, DiContainer container, IRequestHistory requestHistory, IRequestManager requestManager, RequestQueueService requestQueueService, TimeTweeningManager tweeningManager, CherryLevelManager cherryLevelManager)
         {
             _config = config;
             _denier = denier;
             _siraLog = siraLog;
-            _mapStore = mapStore;
             _requestHistory = requestHistory;
             _requestManager = requestManager;
+            _requestQueueService = requestQueueService;
             _tweeningManager = tweeningManager;
             _cherryLevelManager = cherryLevelManager;
-            _webImageAsyncLoader = webImageAsyncLoader;
 
-            _skipLoadingQueue = new List<RequestEventArgs>();
-            _requestLoadingQueue = new Queue<RequestEventArgs>();
-            _historyLoadingQueue = new Queue<RequestEventArgs>();
             _requestDetailView = container.Instantiate<RequestDetailView>();
             _requestPanelView = container.InstantiateComponent<RequestPanelView>(gameObject);
 
-            foreach (var request in (await _requestHistory.History()).Where(r => !r.WasPlayed && r.RequestTime >= DateTime.Now.AddHours(-_config.SesssionLengthInHours)).OrderBy(h => h.Args.RequestTime))
-                _requestLoadingQueue.Enqueue(request.Args);
-
-            _requestManager.SongRequested += SongRequested;
-            _requestManager.SongSkipped += RequestManager_SongSkipped;
+            _requestQueueService.Changed += RequestsChanged;
 
             _requestPanelView.PlayButtonClicked += PlayButtonClicked;
             _requestPanelView.SkipButtonClicked += SkipButtonClicked;
@@ -113,12 +99,8 @@ namespace Cherry.UI
         protected override void DidActivate(bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling)
         {
             base.DidActivate(firstActivation, addedToHierarchy, screenSystemEnabling);
-            if (_isDirty)
-            {
-                requestList.GetTableView().ReloadData();
-                ResetSubPanels();
-                _isDirty = false;
-            }
+            if (_isDirty && !_isInHistory)
+                ShowActiveRequests();
             _requestManager.HasNewRequests = false;
         }
 
@@ -156,7 +138,7 @@ namespace Cherry.UI
             songNameText.fontStyle = FontStyles.Normal;
             authorNameText.fontStyle = FontStyles.Normal;
 
-            ImageView topBackground = (topPanelBackground.GetBackground() as ImageView)!;
+            var topBackground = (ImageView)topPanelBackground.GetBackground();
             topBackground._skew = 0f;
             topBackground.color = Color.white;
             topBackground.color0 = _config.QueueOpened ? _openColor0 : _closedColor0;
@@ -172,6 +154,7 @@ namespace Cherry.UI
             _requestDetailView.SetLoading();
 
             UpdateQueueColors();
+            ShowActiveRequests();
         }
 
         [UIAction("selected-request")]
@@ -184,7 +167,7 @@ namespace Cherry.UI
                 _requestPanelView.SetPlayButtonColor(null);
             }
 
-            RequestCellInfo request = (requestList.GetData()[index] as RequestCellInfo)!;
+            var request = (RequestCellInfo)requestList.GetData()[index];
 
             float durationInSeconds = request.map.LatestVersion.Difficulties.Select(f => f.Seconds).FirstOrDefault();
             _lastSelectedCellInfo = request;
@@ -197,7 +180,7 @@ namespace Cherry.UI
                 durationInSeconds
             );
             _requestPanelView.SetSkipButtonInteractability(!_isInHistory);
-            bool levelInstalled = _cherryLevelManager.TryGetLevel(request.map.LatestVersion.Hash, request.map.LatestVersion.State) != null;
+            var levelInstalled = _cherryLevelManager.TryGetLevel(request.map.LatestVersion.Hash, request.map.LatestVersion.State) != null;
             if (levelInstalled)
             {
                 _requestPanelView.SetPlayButtonColor(null);
@@ -212,100 +195,65 @@ namespace Cherry.UI
             }
         }
 
-        private void RequestManager_SongSkipped(object sender, RequestEventArgs e)
-        {
-            var request = _requestLoadingQueue.FirstOrDefault(c => c.RequestTime == e.RequestTime && c.Requester.ID == e.Requester.ID);
-            if (request != null)
-            {
-                _skipLoadingQueue.Add(e);
-                return;
-            }
-
-            if (requestList == null)
-                return;
-
-            var req = requestList.GetData().Cast<RequestCellInfo>().FirstOrDefault(c => c.request.RequestTime == e.RequestTime && c.request.Requester.ID == e.Requester.ID);
-            if (req != null)
-            {
-                requestList.GetData().Remove(req);
-                if (isActiveAndEnabled)
-                {
-                    requestList.GetTableView().ReloadData();
-                    ResetSubPanels();
-                }
-                else
-                {
-                    _isDirty = true;
-                }
-            }
-        }
-
         private void PlayButtonClicked()
         {
-            if (_lastSelectedCellInfo != null)
+            if (_lastSelectedCellInfo == null)
+                return;
+
+            var map = _lastSelectedCellInfo.map;
+            var request = _lastSelectedCellInfo.request;
+            BeatmapLevel? level = _cherryLevelManager.TryGetLevel(map.LatestVersion.Hash, map.LatestVersion.State);
+            if (level != null)
             {
-                var map = _lastSelectedCellInfo.map;
-                var request = _lastSelectedCellInfo.request;
-                BeatmapLevel? level = _cherryLevelManager.TryGetLevel(map.LatestVersion.Hash, map.LatestVersion.State);
-                if (level != null)
-                {
-                    RemoveAndReloadLatest();
-                    SelectLevelRequested?.Invoke(level);
-                    _requestManager.MarkAsRead(request);
-                    if (_isInHistory) HistoryButtonClicked();
-                }
-                else
-                {
-                    if (_downloadCancelSource != null)
-                    {
-                        _downloadCancelSource.Cancel();
-                        _downloadCancelSource = null;
-                    }
-                    else
-                    {
-                        _ = DownloadRequest(_lastSelectedCellInfo);
-                    }
-                }
+                _requestManager.MarkAsRead(request);
+                ResetSubPanels();
+                SelectLevelRequested?.Invoke(level);
+                if (_isInHistory) HistoryButtonClicked();
+                return;
             }
+
+            if (_downloadCancelSource != null)
+                _downloadCancelSource.Cancel();
+            else
+                _ = DownloadRequest(_lastSelectedCellInfo);
         }
 
         private async Task DownloadRequest(RequestCellInfo cell)
         {
-            _downloadCancelSource = new CancellationTokenSource();
-            Progress<float> progress = new Progress<float>();
+            using var cancellationTokenSource = new CancellationTokenSource();
+            _downloadCancelSource = cancellationTokenSource;
+            var progress = new Progress<float>();
             progress.ProgressChanged += Progress_ProgressChanged;
             BeatmapLevel? level = null;
             _requestPanelView.SetPlayButtonText("Fetching...");
             try
             {
-                level = await _cherryLevelManager.DownloadLevel($"{cell.map.Key} ({cell.map.MapMetadata.SongName} - {cell.map.Uploader.Name})", cell.map.LatestVersion.Hash, cell.map.LatestVersion.DownloadURL, cell.map.LatestVersion.State, _downloadCancelSource.Token, progress);
+                level = await _cherryLevelManager.DownloadLevel($"{cell.map.Key} ({cell.map.MapMetadata.SongName} - {cell.map.Uploader.Name})", cell.map.LatestVersion.Hash, cell.map.LatestVersion.DownloadURL, cell.map.LatestVersion.State, cancellationTokenSource.Token, progress);
+            }
+            catch (OperationCanceledException) when (cancellationTokenSource.IsCancellationRequested)
+            {
             }
             catch (Exception e)
             {
                 _siraLog.Error(e);
             }
-            _downloadCancelSource = null;
+            if (ReferenceEquals(_downloadCancelSource, cancellationTokenSource))
+                _downloadCancelSource = null;
             progress.ProgressChanged -= Progress_ProgressChanged;
             if (level != null)
             {
                 _requestPanelView.SetPlayButtonText("Play");
                 _requestPanelView.SetPlayButtonColor(null);
-                RemoveAndReloadLatest();
-                SelectLevelRequested?.Invoke(level);
                 _requestManager.MarkAsRead(cell.request);
+                ResetSubPanels();
+                SelectLevelRequested?.Invoke(level);
+                if (_isInHistory) HistoryButtonClicked();
             }
             else
             {
                 _requestPanelView.SetPlayButtonText("Download");
                 _requestPanelView.SetPlayButtonColor(_downloadButtonColor);
             }
-        }
-
-        private void RemoveAndReloadLatest()
-        {
-            requestList.GetData().Remove(_lastSelectedCellInfo!);
-            requestList.GetTableView().ReloadData();
-            ResetSubPanels();
         }
 
         private void Progress_ProgressChanged(object sender, float value)
@@ -335,14 +283,12 @@ namespace Cherry.UI
 
         private void RemoveUserFromQueue(IRequester requester)
         {
-            var lid = requester.ID.ToLower();
-            var requesters = requestList.GetData().Cast<RequestCellInfo>().Where(r => r.request.Requester.ID.ToLower() == lid).ToArray();
+            var requesters = _requestQueueService.Requests
+                .Where(request => string.Equals(request.request.Requester.ID, requester.ID, StringComparison.OrdinalIgnoreCase))
+                .ToArray();
             for (int i = 0; i < requesters.Length; i++)
-            {
                 _requestManager.Remove(requesters[i].request);
-                requestList.GetData().Remove(requesters[i]);
-            }
-            requestList.GetTableView().ReloadData();
+            ResetSubPanels();
         }
 
         private void HistoryButtonClicked()
@@ -352,30 +298,50 @@ namespace Cherry.UI
 
         private async Task HistoryButtonClickedAsync()
         {
+            _historyCancelSource?.Cancel();
+            _historyCancelSource?.Dispose();
+            _historyCancelSource = null;
+
             _requestPanelView.SetHistoryButtonText(_isInHistory ? "History" : "Queue");
             requestList.GetTableView().SelectCellWithIdx(-1);
             ResetSubPanels();
             if (_isInHistory)
             {
                 _isInHistory = false;
-                requestList.GetData().Clear();
-                foreach (var request in _activeRequests)
-                    requestList.GetData().Add(request);
                 requestQueueText.text = "Request Queue";
-                requestList.GetTableView().ReloadData();
-                _activeRequests.Clear();
+                ShowActiveRequests();
             }
             else
             {
                 _isInHistory = true;
-                _activeRequests.Clear();
-                _activeRequests.AddRange(requestList.GetData().Cast<RequestCellInfo>());
+                _historyCancelSource = new CancellationTokenSource();
+                CancellationToken cancellationToken = _historyCancelSource.Token;
                 requestList.GetData().Clear();
                 requestList.GetTableView().ReloadData();
                 requestQueueText.text = "History";
 
                 foreach (var request in (await _requestHistory.History()).Where(r => r.WasPlayed).Take(10))
-                    _historyLoadingQueue.Enqueue(request.Args);
+                {
+                    try
+                    {
+                        var cell = await _requestQueueService.ResolveAsync(request.Args, cancellationToken);
+                        cancellationToken.ThrowIfCancellationRequested();
+                        if (cell != null && _isInHistory)
+                        {
+                            requestList.GetData().Add(cell);
+                            requestList.GetTableView().ReloadData();
+                        }
+                    }
+                    catch (OperationCanceledException)
+                    {
+                        return;
+                    }
+                    catch (Exception exception)
+                    {
+                        _siraLog.Error($"Failed to load historical request {request.Key}.");
+                        _siraLog.Error(exception);
+                    }
+                }
             }
         }
 
@@ -384,7 +350,6 @@ namespace Cherry.UI
             if (_lastSelectedCellInfo != null)
             {
                 _requestManager.Remove(_lastSelectedCellInfo.request);
-                requestList.GetData().Remove(_lastSelectedCellInfo);
                 ResetSubPanels();
             }
         }
@@ -401,65 +366,49 @@ namespace Cherry.UI
             _lastSelectedCellInfo = null;
         }
 
-        private void QueueButtonClicked()
-        {
-            SetQueueStatus(!_config.QueueOpened);
-        }
-
-        private void SongRequested(object sender, RequestEventArgs e)
+        private void RequestsChanged()
         {
             if (_isActivated)
                 _requestManager.HasNewRequests = false;
-            _requestLoadingQueue.Enqueue(e);
-        }
 
-        private async Task SongRequestedAsync(RequestEventArgs e, bool forHistory)
-        {
-            _isProcessing = true;
-
-            if (_skipLoadingQueue.Contains(e))
+            if (_isInHistory || requestList == null)
             {
-                _skipLoadingQueue.Remove(e);
-                _isProcessing = false;
+                _isDirty = true;
                 return;
             }
 
-            try
-            {
-                Map? mapq = await _mapStore.GetMapAsync(e.Key);
-                if (mapq == null)
-                {
-                    _isProcessing = false;
-                    return;
-                }
-
-                Map map = mapq.Value;
-                Sprite coverSprite = await _webImageAsyncLoader.LoadSpriteAsync(map.LatestVersion.CoverURL, CancellationToken.None);
-                RequestCellInfo cell = new RequestCellInfo(e, map, coverSprite);
-
-                if (!(forHistory && !_isInHistory))
-                {
-                    requestList.GetData().Add(cell);
-                    requestList.GetTableView().ReloadData();
-                }
-            }
-            catch (Exception ex)
-            {
-                _siraLog.Error("An error has occured.");
-                _siraLog.Error(ex);
-            }
-            _isProcessing = false;
+            ShowActiveRequests();
         }
 
-        private void SetQueueStatus(bool value)
+        private void ShowActiveRequests()
         {
-            _config.QueueOpened = value;
+            if (_isInHistory || requestList == null)
+                return;
+
+            var requests = _requestQueueService.Requests;
+            var selectedRequestWasRemoved = _lastSelectedCellInfo != null
+                && !requests.Any(item => ReferenceEquals(item.request, _lastSelectedCellInfo.request));
+
+            var data = requestList.GetData();
+            data.Clear();
+            foreach (var request in requests)
+                data.Add(request);
+            requestList.GetTableView().ReloadData();
+            _isDirty = false;
+
+            if (selectedRequestWasRemoved)
+                ResetSubPanels();
+        }
+
+        private void QueueButtonClicked()
+        {
+            _config.QueueOpened = !_config.QueueOpened;
             UpdateQueueColors();
         }
 
         private void UpdateQueueColors()
         {
-            ImageView topBackground = (topPanelBackground.GetBackground() as ImageView)!;
+            var topBackground = (ImageView)topPanelBackground.GetBackground();
             _requestPanelView.SetQueueButtonColor(_config.QueueOpened ? Color.green : Color.red);
             _requestPanelView.SetQueueButtonText(_config.QueueOpened ? "Close Queue" : "Open Queue");
 
@@ -477,19 +426,14 @@ namespace Cherry.UI
             }, 0.5f, EaseType.InOutQuad), topPanelBackground);
         }
 
-        protected void Update()
-        {
-            if (isInViewControllerHierarchy && !_isProcessing)
-            {
-                if (_requestLoadingQueue.Count > 0 && !_isInHistory)
-                    _ = SongRequestedAsync(_requestLoadingQueue.Dequeue(), false);
-                else if (_historyLoadingQueue.Count > 0)
-                    _ = SongRequestedAsync(_historyLoadingQueue.Dequeue(), true);
-            }
-        }
-
         public void Dispose()
         {
+            _historyCancelSource?.Cancel();
+            _historyCancelSource?.Dispose();
+            _downloadCancelSource?.Cancel();
+            _downloadCancelSource?.Dispose();
+
+            _requestQueueService.Changed -= RequestsChanged;
             _requestPanelView.HistoryButtonClicked -= HistoryButtonClicked;
             _requestPanelView.QueueButtonClicked -= QueueButtonClicked;
             _requestPanelView.SkipButtonClicked -= SkipButtonClicked;
@@ -499,8 +443,6 @@ namespace Cherry.UI
             _requestDetailView.BanSessionButtonClicked -= BanUserSession;
             _requestDetailView.BanSongButtonClicked -= BanSong;
 
-            _requestManager.SongSkipped -= RequestManager_SongSkipped;
-            _requestManager.SongRequested -= SongRequested;
         }
     }
 }
