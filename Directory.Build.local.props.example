@@ -1,0 +1,8 @@
+<Project>
+  <PropertyGroup>
+    <CherryRefsRoot>/path/to/versioned/refs</CherryRefsRoot>
+    <CherryCatCoreDir>/path/to/directory/containing/CatCore.dll</CherryCatCoreDir>
+    <CherrySshTarget1_40_0>user@host</CherrySshTarget1_40_0>
+    <CherrySshBeatSaberDir1_40_0>C:\Path\To\Beat Saber 1.40.8</CherrySshBeatSaberDir1_40_0>
+  </PropertyGroup>
+</Project>

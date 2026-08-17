@@ -5,6 +5,7 @@ using Cherry.Models;
 using HMUI;
 using IPA.Loader;
 using IPA.Utilities;
+using Legato.Presentation;
 using SiraUtil.Zenject;
 using System;
 using System.IO;
@@ -135,7 +136,7 @@ namespace Cherry.UI
             using MemoryStream ms = new MemoryStream();
             await mrs.CopyToAsync(ms);
 
-            _cherryImage.sprite = BeatSaberMarkupLanguage.Utilities.LoadSpriteRaw(ms.ToArray());
+            _cherryImage.sprite = SpriteFactory.Create(ms.ToArray());
             _cherryImage.sprite.texture.wrapMode = TextureWrapMode.Clamp;
         }
 

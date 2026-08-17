@@ -71,7 +71,7 @@ namespace Cherry.UI
             SetLeftScreenViewController(_cherrySettingsView, ViewController.AnimationType.In);
         }
 
-        private void SelectLevel(IPreviewBeatmapLevel level)
+        private void SelectLevel(BeatmapLevel level)
         {
             _parentFlowCoordinator.DismissFlowCoordinator(this, () =>
             {
@@ -83,7 +83,6 @@ namespace Cherry.UI
                         var control = SegmentedControl(ref _selectLevelCategoryViewController);
                         control.SelectCellWithNumber(i);
 
-                        _levelSearchViewController.ResetCurrentFilterParams();
                         _levelFilteringNavigationController.UpdateSecondChildControllerContent(SelectLevelCategoryViewController.LevelCategory.All);
                         _levelCollectionNavigationController.SelectLevel(level);
                         break;

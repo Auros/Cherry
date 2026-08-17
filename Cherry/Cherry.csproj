@@ -1,49 +1,89 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 	<PropertyGroup>
-		<TargetFramework>netstandard2.0</TargetFramework>
+		<ProjectGuid>{7CA368AF-A401-4F16-B914-86EAE7B90A85}</ProjectGuid>
+		<TargetFramework>net48</TargetFramework>
 		<OutputType>Library</OutputType>
-		<LangVersion>8</LangVersion>
+		<ImplicitUsings>disable</ImplicitUsings>
+		<Platforms>AnyCPU;BS1.29.0;BS1.37.1;BS1.38.0;BS1.40.0;BS1.42.0</Platforms>
+		<Configurations>Debug;Release;Dev</Configurations>
 		<Nullable>enable</Nullable>
-		<TreatWarningsAsErrors>true</TreatWarningsAsErrors>
-		<LocalRefsDir Condition="Exists('..\Refs')">..\Refs</LocalRefsDir>
-		<BeatSaberDir>$(LocalRefsDir)</BeatSaberDir>
+		<CherryTargetVersion Condition="'$(CherryTargetVersion)' == '' AND '$(Platform)' == 'BS1.29.0'">1.29.0</CherryTargetVersion>
+		<CherryTargetVersion Condition="'$(CherryTargetVersion)' == '' AND '$(Platform)' == 'BS1.37.1'">1.37.1</CherryTargetVersion>
+		<CherryTargetVersion Condition="'$(CherryTargetVersion)' == '' AND '$(Platform)' == 'BS1.38.0'">1.38.0</CherryTargetVersion>
+		<CherryTargetVersion Condition="'$(CherryTargetVersion)' == '' AND '$(Platform)' == 'BS1.40.0'">1.40.0</CherryTargetVersion>
+		<CherryTargetVersion Condition="'$(CherryTargetVersion)' == '' AND '$(Platform)' == 'BS1.42.0'">1.42.0</CherryTargetVersion>
+		<CherryTargetVersion Condition="'$(CherryTargetVersion)' == ''">1.42.0</CherryTargetVersion>
+		<LegatoSourceVersion>1.44.1</LegatoSourceVersion>
+		<LegatoTargetVersion>$(CherryTargetVersion)</LegatoTargetVersion>
+		<CherryVersionedRefsDir Condition="'$(CherryRefsRoot)' != ''">$(CherryRefsRoot)\$(CherryTargetVersion)</CherryVersionedRefsDir>
+		<LocalRefsDir Condition="'$(LocalRefsDir)' == '' AND Exists('$(CherryVersionedRefsDir)\Beat Saber_Data\Managed')">$(CherryVersionedRefsDir)</LocalRefsDir>
+		<LocalRefsDir Condition="'$(LocalRefsDir)' == '' AND '$(CherryTargetVersion)' == '1.42.0' AND Exists('$(CherryRefsRoot)\Beat Saber_Data\Managed')">$(CherryRefsRoot)</LocalRefsDir>
+		<LocalRefsDir Condition="'$(LocalRefsDir)' == '' AND Exists('$(RepositoryRoot)..\Refs\Beat Saber_Data\Managed')">$(RepositoryRoot)..\Refs</LocalRefsDir>
+		<GameReferences Condition="'$(GameReferences)' == '' AND '$(BeatSaberDir)' != ''">$(BeatSaberDir)</GameReferences>
+		<GameReferences Condition="'$(GameReferences)' == '' AND '$(LocalRefsDir)' != ''">$(LocalRefsDir)</GameReferences>
+		<GameReferences Condition="'$(GameReferences)' == '' AND '$(GameDirectory)' != ''">$(GameDirectory)</GameReferences>
+		<GameDirectory Condition="'$(GameDirectory)' == '' AND '$(GameReferences)' != ''">$(GameReferences)</GameDirectory>
+		<BeatSaberDir Condition="'$(BeatSaberDir)' == '' AND '$(GameReferences)' != ''">$(GameReferences)</BeatSaberDir>
+		<ManifestPath Condition="'$(ManifestPath)' == '' AND Exists('$(MSBuildProjectDirectory)\Manifests\$(CherryTargetVersion)\manifest.json')">Manifests\$(CherryTargetVersion)\manifest.json</ManifestPath>
+		<ManifestPath Condition="'$(ManifestPath)' == ''">manifest.json</ManifestPath>
 		<AppOutputBase>$(MSBuildProjectDirectory)\</AppOutputBase>
 		<Copyright>Copyright © Auros 2021</Copyright>
 		<AssemblyName>Cherry</AssemblyName>
 		<RootNamespace>Cherry</RootNamespace>
 		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+		<BSMTProjectType>BSIPA</BSMTProjectType>
 	</PropertyGroup>
-
-	<PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
-		<Optimize>false</Optimize>
-		<OutputPath>bin\Debug\</OutputPath>
-		<DebugType>full</DebugType>
-	</PropertyGroup>
-
-	<PropertyGroup Condition=" '$(Configuration)' == 'Release' ">
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
 		<Optimize>true</Optimize>
 		<OutputPath>bin\Release\</OutputPath>
 		<DebugType>pdbonly</DebugType>
 	</PropertyGroup>
-
-	<PropertyGroup Condition="$(DefineConstants.Contains('CIBuild')) OR '$(NCrunch)' == '1'">
-		<DisableCopyToPlugins>True</DisableCopyToPlugins>
+	<PropertyGroup Condition=" '$(Configuration)' == 'Release' AND '$(Platform)' != 'AnyCPU' ">
+		<Optimize>true</Optimize>
+		<OutputPath>bin\$(CherryTargetVersion)\Release\</OutputPath>
+		<DebugType>pdbonly</DebugType>
 	</PropertyGroup>
-
+	<PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
+		<Optimize>false</Optimize>
+		<OutputPath>bin\$(CherryTargetVersion)\Debug\</OutputPath>
+		<DebugType>full</DebugType>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Dev|AnyCPU' ">
+		<Optimize>false</Optimize>
+		<OutputPath>bin\Dev\</OutputPath>
+		<DebugType>full</DebugType>
+		<DefineConstants>DEBUG;TRACE;USE_HOT_RELOAD</DefineConstants>
+	</PropertyGroup>
+	<PropertyGroup Condition=" '$(Configuration)' == 'Dev' AND '$(Platform)' != 'AnyCPU' ">
+		<Optimize>false</Optimize>
+		<OutputPath>bin\$(CherryTargetVersion)\Dev\</OutputPath>
+		<DebugType>full</DebugType>
+		<DefineConstants>DEBUG;TRACE;USE_HOT_RELOAD</DefineConstants>
+	</PropertyGroup>
 	<PropertyGroup Condition="'$(NCrunch)' == '1'">
-		<DisableCopyToPlugins>True</DisableCopyToPlugins>
+		<DisableCopyToGame>True</DisableCopyToGame>
 		<DisableZipRelease>True</DisableZipRelease>
 	</PropertyGroup>
-
 	<ItemGroup>
 		<None Remove="Resources\cherry.png" />
 		<None Remove="Views\cherry-settings-view.bsml" />
 		<None Remove="Views\open-settings-view.bsml" />
 		<None Remove="Views\request-view.bsml" />
 	</ItemGroup>
-
 	<ItemGroup>
+		<Reference Include="BGLib.DotnetExtension" Condition="Exists('$(BeatSaberDir)\Beat Saber_Data\Managed\BGLib.DotnetExtension.dll')">
+			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\BGLib.DotnetExtension.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Interactable" Condition="Exists('$(BeatSaberDir)\Beat Saber_Data\Managed\Interactable.dll')">
+			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Interactable.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="UnityEngine.ImageConversionModule">
+			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.ImageConversionModule.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
 		<Reference Include="BeatmapCore">
 			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\BeatmapCore.dll</HintPath>
 			<Private>False</Private>
@@ -53,7 +93,8 @@
 			<Private>False</Private>
 		</Reference>
 		<Reference Include="CatCore">
-			<HintPath>$(BeatSaberDir)\Libs\CatCore.dll</HintPath>
+			<HintPath Condition="Exists('$(GameReferences)\Libs\CatCore.dll')">$(GameReferences)\Libs\CatCore.dll</HintPath>
+			<HintPath Condition="!Exists('$(GameReferences)\Libs\CatCore.dll') AND '$(CherryCatCoreDir)' != ''">$(CherryCatCoreDir)\CatCore.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
 		<Reference Include="GameplayCore">
@@ -88,12 +129,20 @@
 			<HintPath>$(BeatSaberDir)\Plugins\SongCore.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
+		<Reference Include="Tweening" Condition="Exists('$(BeatSaberDir)\Beat Saber_Data\Managed\Tweening.dll')">
+			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Tweening.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
 		<Reference Include="UnityEngine">
 			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\UnityEngine.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
 		<Reference Include="Unity.TextMeshPro">
 			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Unity.TextMeshPro.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
+		<Reference Include="Unity.Mathematics" Condition="Exists('$(BeatSaberDir)\Beat Saber_Data\Managed\Unity.Mathematics.dll')">
+			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Unity.Mathematics.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
 		<Reference Include="UnityEngine.AudioModule">
@@ -124,6 +173,10 @@
 			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Main.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
+		<Reference Include="BeatSaber.Settings" Condition="Exists('$(BeatSaberDir)\Beat Saber_Data\Managed\BeatSaber.Settings.dll')">
+			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\BeatSaber.Settings.dll</HintPath>
+			<Private>False</Private>
+		</Reference>
 		<Reference Include="HMLib">
 			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\HMLib.dll</HintPath>
 			<Private>False</Private>
@@ -149,30 +202,28 @@
 			<Private>False</Private>
 		</Reference>
 	</ItemGroup>
-
 	<ItemGroup>
-		<EmbeddedResource Include="manifest.json" />
+		<EmbeddedResource Include="$(ManifestPath)" LogicalName="$(AssemblyName).manifest.json" />
 		<EmbeddedResource Include="Resources\cherry.png" />
 		<EmbeddedResource Include="Views\open-settings-view.bsml" />
 		<EmbeddedResource Include="Views\request-view.bsml" />
 		<EmbeddedResource Include="Views\cherry-settings-view.bsml" />
 	</ItemGroup>
-
 	<ItemGroup>
 		<SourceRoot Include="$(MSBuildThisFileDirectory)/" />
 	</ItemGroup>
-
 	<ItemGroup>
 		<None Include="Cherry.csproj.user" Condition="Exists('Cherry.csproj.user')" Visible="false" />
-		<None Include="Directory.Build.props" Condition="Exists('Directory.Build.props')" Visible="false" />
-		<None Include="Directory.Build.targets" Condition="Exists('Directory.Build.targets')" Visible="false" />
 	</ItemGroup>
-
 	<ItemGroup>
-		<PackageReference Include="BeatSaberModdingTools.Tasks" Version="1.3.2">
+		<OutputCopy Include="$(OutputPath)$(AssemblyName).dll" OutputPath="Plugins\$(AssemblyName).dll" />
+		<OutputCopy Include="$(OutputPath)$(AssemblyName).pdb" OutputPath="Plugins\$(AssemblyName).pdb" />
+	</ItemGroup>
+	<ItemGroup>
+		<PackageReference Include="BeatSaberModdingTools.Tasks">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+		<PackageReference Include="LegatoBS" PrivateAssets="all" />
 	</ItemGroup>
-
 </Project>

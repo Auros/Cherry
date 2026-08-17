@@ -2,7 +2,7 @@
 using Cherry.Interfaces;
 using Cherry.Models;
 using IPA.Loader;
-using SiraUtil.Logging;
+using Legato.Presentation;
 using SiraUtil.Zenject;
 using System;
 using System.IO;
@@ -131,7 +131,7 @@ namespace Cherry.UI
             await mrs.CopyToAsync(ms);
 
             _image.OnClickEvent += Clicked;
-            _image.sprite = BeatSaberMarkupLanguage.Utilities.LoadSpriteRaw(ms.ToArray());
+            _image.sprite = SpriteFactory.Create(ms.ToArray());
             _image.sprite.texture.wrapMode = TextureWrapMode.Clamp;
             RequestManager_SongStateChange(null!, null!);
 
@@ -149,8 +149,7 @@ namespace Cherry.UI
             if (_image != null)
             {
                 _image.OnClickEvent -= Clicked;
-                UnityEngine.Object.Destroy(_image.sprite);
-                UnityEngine.Object.Destroy(_image.sprite.texture);
+                SpriteFactory.Destroy(_image.sprite);
             }
         }
 

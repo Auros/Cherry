@@ -115,7 +115,7 @@ namespace Cherry.Managers
                 string json = await sr.ReadToEndAsync();
                 try
                 {
-                    var requests = JsonConvert.DeserializeObject<CachedRequest[]>(json);
+                    var requests = JsonConvert.DeserializeObject<CachedRequest[]>(json) ?? Array.Empty<CachedRequest>();
                     _cachedRequests.Clear();
                     for (int i = 0; i < requests.Length; i++)
                     {

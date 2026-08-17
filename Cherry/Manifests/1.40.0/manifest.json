@@ -1,0 +1,16 @@
+{
+  "$schema": "https://raw.githubusercontent.com/bsmg/BSIPA-MetadataFileSchema/master/Schema.json",
+  "id": "Cherry",
+  "name": "Cherry",
+  "author": "Auros",
+  "version": "1.2.0",
+  "description": "A lightweight chat-based song request mod.",
+  "gameVersion": "1.40.0",
+  "dependsOn": {
+    "BSIPA": "^4.3.6",
+    "BeatSaberMarkupLanguage": "^1.12.5",
+    "SiraUtil": "^3.2.1",
+    "SongCore": "^3.15.2",
+    "CatCore": "^1.0.0"
+  }
+}

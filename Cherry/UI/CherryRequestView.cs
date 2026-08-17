@@ -61,8 +61,6 @@ namespace Cherry.UI
         internal static readonly FieldAccessor<ScrollView, Button>.Accessor PageUpButton = FieldAccessor<ScrollView, Button>.GetAccessor("_pageUpButton");
         internal static readonly FieldAccessor<ScrollView, Button>.Accessor PageDownButton = FieldAccessor<ScrollView, Button>.GetAccessor("_pageDownButton");
         internal static readonly FieldAccessor<LevelListTableCell, Image>.Accessor CellBackground = FieldAccessor<LevelListTableCell, Image>.GetAccessor("_backgroundImage");
-        internal static readonly FieldAccessor<CustomListTableData, LevelListTableCell>.Accessor CellInstance = FieldAccessor<CustomListTableData, LevelListTableCell>.GetAccessor("songListTableCellInstance");
-
         #endregion
 
         private bool _isDirty;
@@ -84,7 +82,7 @@ namespace Cherry.UI
         private Queue<RequestEventArgs> _requestLoadingQueue = null!;
         private Queue<RequestEventArgs> _historyLoadingQueue = null!;
         private readonly List<RequestCellInfo> _activeRequests = new List<RequestCellInfo>();
-        public event Action<IPreviewBeatmapLevel>? SelectLevelRequested;
+        public event Action<BeatmapLevel>? SelectLevelRequested;
 
         private readonly Color _downloadButtonColor = new Color(0.5f, 0.5f, 0.5f);
         private readonly Color _openColor0 = new Color(0.217f, 0.782f, 0f);
@@ -132,7 +130,7 @@ namespace Cherry.UI
             base.DidActivate(firstActivation, addedToHierarchy, screenSystemEnabling);
             if (_isDirty)
             {
-                requestList.tableView.ReloadData();
+                requestList.GetTableView().ReloadData();
                 ResetSubPanels();
                 _isDirty = false;
             }
@@ -142,15 +140,18 @@ namespace Cherry.UI
         [UIAction("#post-parse")]
         protected void Parsed()
         {
-            var scroller = Scroller(ref requestList.tableView);
+            var tableView = requestList.GetTableView();
+            var scroller = Scroller(ref tableView);
 
             PageUpButton(ref scroller) = upButton;
             PageDownButton(ref scroller) = downButton;
 
-            var list = requestList;
-            var inst = CellInstance(ref list);
+            var inst = requestList.GetSongListTableCellPrefab();
             if (inst == null)
-                inst = CellInstance(ref list) = list.GetTableCell();
+            {
+                inst = requestList.GetTableCell();
+                requestList.SetSongListTableCellPrefab(inst);
+            }
             var bg = CellBackground(ref inst);
             var cbg = CellCoverImage(ref inst);
             var cellBackground = (bg as ImageView)!;
@@ -172,7 +173,7 @@ namespace Cherry.UI
             songNameText.fontStyle = FontStyles.Normal;
             authorNameText.fontStyle = FontStyles.Normal;
 
-            ImageView topBackground = (topPanelBackground.background as ImageView)!;
+            ImageView topBackground = (topPanelBackground.GetBackground() as ImageView)!;
             ImageSkew(ref topBackground) = 0f;
             topBackground.color = Color.white;
             topBackground.color0 = _config.QueueOpened ? _openColor0 : _closedColor0;
@@ -200,7 +201,7 @@ namespace Cherry.UI
                 _requestPanelView.SetPlayButtonColor(null);
             }
 
-            RequestCellInfo request = (requestList.data[index] as RequestCellInfo)!;
+            RequestCellInfo request = (requestList.GetData()[index] as RequestCellInfo)!;
 
             float durationInSeconds = request.map.LatestVersion.Difficulties.Select(f => f.Seconds).FirstOrDefault();
             _lastSelectedCellInfo = request;
@@ -208,12 +209,12 @@ namespace Cherry.UI
                 request.map.Name,
                 request.map.Uploader.Name,
                 request.request,
-                request.icon,
+                request.GetIcon(),
                 (float)request.map.MapStats.Rating,
                 durationInSeconds
             );
             _requestPanelView.SetSkipButtonInteractability(!_isInHistory);
-            bool levelInstalled = _cherryLevelManager.LevelIsInstalled(request.map.LatestVersion.Hash, request.map.LatestVersion.State != Map.State.Published);
+            bool levelInstalled = _cherryLevelManager.TryGetLevel(request.map.LatestVersion.Hash, request.map.LatestVersion.State) != null;
             if (levelInstalled)
             {
                 _requestPanelView.SetPlayButtonColor(null);
@@ -240,13 +241,13 @@ namespace Cherry.UI
             if (requestList == null)
                 return;
 
-            var req = requestList.data.Cast<RequestCellInfo>().FirstOrDefault(c => c.request.RequestTime == e.RequestTime && c.request.Requester.ID == e.Requester.ID);
+            var req = requestList.GetData().Cast<RequestCellInfo>().FirstOrDefault(c => c.request.RequestTime == e.RequestTime && c.request.Requester.ID == e.Requester.ID);
             if (req != null)
             {
-                requestList.data.Remove(req);
+                requestList.GetData().Remove(req);
                 if (isActiveAndEnabled)
                 {
-                    requestList.tableView.ReloadData();
+                    requestList.GetTableView().ReloadData();
                     ResetSubPanels();
                 }
                 else
@@ -262,7 +263,7 @@ namespace Cherry.UI
             {
                 var map = _lastSelectedCellInfo.map;
                 var request = _lastSelectedCellInfo.request;
-                IPreviewBeatmapLevel? level = _cherryLevelManager.TryGetLevel(map.LatestVersion.Hash, map.LatestVersion.State != Map.State.Published);
+                BeatmapLevel? level = _cherryLevelManager.TryGetLevel(map.LatestVersion.Hash, map.LatestVersion.State);
                 if (level != null)
                 {
                     RemoveAndReloadLatest();
@@ -290,7 +291,7 @@ namespace Cherry.UI
             _downloadCancelSource = new CancellationTokenSource();
             Progress<float> progress = new Progress<float>();
             progress.ProgressChanged += Progress_ProgressChanged;
-            IPreviewBeatmapLevel? level = null;
+            BeatmapLevel? level = null;
             _requestPanelView.SetPlayButtonText("Fetching...");
             try
             {
@@ -319,8 +320,8 @@ namespace Cherry.UI
 
         private void RemoveAndReloadLatest()
         {
-            requestList.data.Remove(_lastSelectedCellInfo);
-            requestList.tableView.ReloadData();
+            requestList.GetData().Remove(_lastSelectedCellInfo!);
+            requestList.GetTableView().ReloadData();
             ResetSubPanels();
         }
 
@@ -352,13 +353,13 @@ namespace Cherry.UI
         private void RemoveUserFromQueue(IRequester requester)
         {
             var lid = requester.ID.ToLower();
-            var requesters = requestList.data.Cast<RequestCellInfo>().Where(r => r.request.Requester.ID.ToLower() == lid).ToArray();
+            var requesters = requestList.GetData().Cast<RequestCellInfo>().Where(r => r.request.Requester.ID.ToLower() == lid).ToArray();
             for (int i = 0; i < requesters.Length; i++)
             {
                 _requestManager.Remove(requesters[i].request);
-                requestList.data.Remove(requesters[i]);
+                requestList.GetData().Remove(requesters[i]);
             }
-            requestList.tableView.ReloadData();
+            requestList.GetTableView().ReloadData();
         }
 
         private void HistoryButtonClicked()
@@ -369,24 +370,25 @@ namespace Cherry.UI
         private async Task HistoryButtonClickedAsync()
         {
             _requestPanelView.SetHistoryButtonText(_isInHistory ? "History" : "Queue");
-            requestList.tableView.SelectCellWithIdx(-1);
+            requestList.GetTableView().SelectCellWithIdx(-1);
             ResetSubPanels();
             if (_isInHistory)
             {
                 _isInHistory = false;
-                requestList.data.Clear();
-                requestList.data.AddRange(_activeRequests);
+                requestList.GetData().Clear();
+                foreach (var request in _activeRequests)
+                    requestList.GetData().Add(request);
                 requestQueueText.text = "Request Queue";
-                requestList.tableView.ReloadData();
+                requestList.GetTableView().ReloadData();
                 _activeRequests.Clear();
             }
             else
             {
                 _isInHistory = true;
                 _activeRequests.Clear();
-                _activeRequests.AddRange(requestList.data.Cast<RequestCellInfo>());
-                requestList.data.Clear();
-                requestList.tableView.ReloadData();
+                _activeRequests.AddRange(requestList.GetData().Cast<RequestCellInfo>());
+                requestList.GetData().Clear();
+                requestList.GetTableView().ReloadData();
                 requestQueueText.text = "History";
 
                 foreach (var request in (await _requestHistory.History()).Where(r => r.WasPlayed).Take(10))
@@ -399,7 +401,7 @@ namespace Cherry.UI
             if (_lastSelectedCellInfo != null)
             {
                 _requestManager.Remove(_lastSelectedCellInfo.request);
-                requestList.data.Remove(_lastSelectedCellInfo);
+                requestList.GetData().Remove(_lastSelectedCellInfo);
                 ResetSubPanels();
             }
         }
@@ -411,8 +413,8 @@ namespace Cherry.UI
             _requestPanelView.SetPlayButtonText("Play");
             _requestPanelView.SetPlayButtonInteractability(false);
             _requestPanelView.SetSkipButtonInteractability(false);
-            requestList.tableView.ReloadData();
-            requestList.tableView.SelectCellWithIdx(-1);
+            requestList.GetTableView().ReloadData();
+            requestList.GetTableView().SelectCellWithIdx(-1);
             _lastSelectedCellInfo = null;
         }
 
@@ -454,8 +456,8 @@ namespace Cherry.UI
 
                 if (!(forHistory && !_isInHistory))
                 {
-                    requestList.data.Add(cell);
-                    requestList.tableView.ReloadData();
+                    requestList.GetData().Add(cell);
+                    requestList.GetTableView().ReloadData();
                 }
             }
             catch (Exception ex)
@@ -474,7 +476,7 @@ namespace Cherry.UI
 
         private void UpdateQueueColors()
         {
-            ImageView topBackground = (topPanelBackground.background as ImageView)!;
+            ImageView topBackground = (topPanelBackground.GetBackground() as ImageView)!;
             _requestPanelView.SetQueueButtonColor(_config.QueueOpened ? Color.green : Color.red);
             _requestPanelView.SetQueueButtonText(_config.QueueOpened ? "Close Queue" : "Open Queue");
 

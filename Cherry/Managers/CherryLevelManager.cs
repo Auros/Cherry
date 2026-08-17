@@ -1,7 +1,7 @@
-﻿using SiraUtil.Logging;
+﻿using Legato.Beatmaps;
+using SiraUtil.Logging;
 using SiraUtil.Web;
 using System;
-using System.Collections.Concurrent;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -19,27 +19,23 @@ namespace Cherry.Managers
         private readonly IHttpService _httpService;
         private readonly BeatmapLevelsModel _beatmapLevelsModel;
 
-        public CherryLevelManager(SiraLog siraLog, IHttpService siraClient, BeatmapLevelsModel beatmapLevelsModel)
+        public CherryLevelManager(SiraLog siraLog, IHttpService httpService, BeatmapLevelsModel beatmapLevelsModel)
         {
             _siraLog = siraLog;
-            _httpService = siraClient;
+            _httpService = httpService;
             _beatmapLevelsModel = beatmapLevelsModel;
         }
 
-        public bool LevelIsInstalled(string hash, bool wip = false)
+        public BeatmapLevel? TryGetLevel(string hash, State state)
         {
-            string cleanerHash = $"custom_level_{hash.ToUpper()}";
-            bool levelExists = _beatmapLevelsModel.allLoadedBeatmapLevelPackCollection.beatmapLevelPacks.Any(bm => bm.beatmapLevelCollection.beatmapLevels.Any(lvl => wip ? lvl.levelID.StartsWith(cleanerHash) : lvl.levelID == cleanerHash));
-            return levelExists;
+            var levelId = $"custom_level_{hash.ToUpperInvariant()}";
+            return _beatmapLevelsModel.GetLoadedBeatmapLevels().FirstOrDefault(level =>
+                state != State.Published
+                    ? level.levelID.StartsWith(levelId, StringComparison.OrdinalIgnoreCase)
+                    : level.levelID.Equals(levelId, StringComparison.OrdinalIgnoreCase));
         }
 
-        public IPreviewBeatmapLevel? TryGetLevel(string hash, bool wip = false)
-        {
-            string cleanerHash = $"custom_level_{hash.ToUpper()}";
-            return _beatmapLevelsModel.allLoadedBeatmapLevelPackCollection.beatmapLevelPacks.SelectMany(bm => bm.beatmapLevelCollection.beatmapLevels).FirstOrDefault(lvl => wip ? lvl.levelID.StartsWith(cleanerHash) : lvl.levelID == cleanerHash);
-        }
-
-        public async Task<IPreviewBeatmapLevel?> DownloadLevel(string name, string hash, string url, State state, CancellationToken token, IProgress<float>? downloadProgress = null)
+        public async Task<BeatmapLevel?> DownloadLevel(string name, string hash, string url, State state, CancellationToken token, IProgress<float>? downloadProgress = null)
         {
             var response = await _httpService.GetAsync(url, downloadProgress, token);
             if (!response.Successful)
@@ -48,32 +44,20 @@ namespace Cherry.Managers
                 return null;
             }
 
-            // Songcore doesn't have a constant for the WIP folder and does the same Path.Combine to access that folder
+            // SongCore constructs the WIP path itself and doesn't expose it
             var extractPath = await ExtractZipAsync(await response.ReadAsByteArrayAsync(), name, state == State.Published ? CustomLevelPathHelper.customLevelsDirectoryPath : Path.Combine(Application.dataPath, "CustomWIPLevels"));
             if (string.IsNullOrEmpty(extractPath))
                 return null;
 
-            // Eris's black magic
-            var semaphoreSlim = new SemaphoreSlim(0, 1);
-            void Release(SongCore.Loader _, ConcurrentDictionary<string, CustomPreviewBeatmapLevel> __)
+            if (!await SongCore.Loader.Instance.RefreshSongsAsync(false, TimeSpan.FromSeconds(30), token))
             {
-                SongCore.Loader.SongsLoadedEvent -= Release;
-                semaphoreSlim?.Release();
-            }
-            try
-            {
-                SongCore.Loader.SongsLoadedEvent += Release;
-                SongCore.Loader.Instance.RefreshSongs(false);
-                await semaphoreSlim.WaitAsync(CancellationToken.None);
-            }
-            catch (Exception e)
-            {
-                Release(null!, null!);
-                _siraLog.Error(e);
+                _siraLog.Warn($"Timed out waiting for SongCore to load {name}.");
                 return null;
             }
-            return TryGetLevel(hash, state != State.Published);
+
+            return TryGetLevel(hash, state);
         }
+
         private async Task<string> ExtractZipAsync(byte[] zip, string name, string customSongsPath, bool overwrite = false)
         {
             Stream zipStream = new MemoryStream(zip);
@@ -84,7 +68,7 @@ namespace Cherry.Managers
 
                 ZipArchive archive = new ZipArchive(zipStream, ZipArchiveMode.Read);
                 string basePath = name;
-                string path = customSongsPath + "/" + r.Replace(basePath, ""); ;
+                string path = customSongsPath + "/" + r.Replace(basePath, "");
                 if (!overwrite && Directory.Exists(path))
                 {
                     int pathNum = 1;
@@ -112,7 +96,6 @@ namespace Cherry.Managers
                 zipStream.Close();
                 return "";
             }
-
         }
     }
 }

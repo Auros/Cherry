@@ -1,7 +1,6 @@
-﻿using IPA.Loader;
+﻿using Legato.Presentation;
 using SiraUtil.Logging;
 using SiraUtil.Web;
-using SiraUtil.Zenject;
 using System;
 using System.Collections.Generic;
 using System.Threading;
@@ -10,28 +9,26 @@ using UnityEngine;
 
 namespace Cherry.Managers
 {
-    internal class WebImageAsyncLoader : IDisposable, ISpriteAsyncLoader
+    internal class WebImageAsyncLoader : IDisposable
     {
         private readonly SiraLog _siraLog;
         private readonly IHttpService _httpService;
-        private readonly CancellationTokenSource _cancellationTokenSource;
         private readonly Dictionary<string, Sprite> _spriteCache = new Dictionary<string, Sprite>();
 
-        public WebImageAsyncLoader(SiraLog siraLog, IHttpService httpService, UBinder<Plugin, PluginMetadata> metadataBinder)
+        public WebImageAsyncLoader(SiraLog siraLog, IHttpService httpService)
         {
             _siraLog = siraLog;
             _httpService = httpService;
-            _cancellationTokenSource = new CancellationTokenSource();
         }
 
         public async Task<Sprite> LoadSpriteAsync(string path, CancellationToken cancellationToken)
         {
-            if (_spriteCache.TryGetValue(path, out Sprite sprite))
+            if (_spriteCache.TryGetValue(path, out var sprite))
             {
                 return sprite;
             }
             _siraLog.Debug("Downloading Sprite at " + path);
-            var response = await _httpService.GetAsync(path, cancellationToken: cancellationToken == default ? _cancellationTokenSource.Token : cancellationToken);
+            var response = await _httpService.GetAsync(path, cancellationToken: cancellationToken);
             if (response.Successful)
             {
                 var imageBytes = await response.ReadAsByteArrayAsync();
@@ -42,7 +39,7 @@ namespace Cherry.Managers
                     {
                         return sprite;
                     }
-                    sprite = BeatSaberMarkupLanguage.Utilities.LoadSpriteRaw(imageBytes);
+                    sprite = SpriteFactory.Create(imageBytes);
                     sprite.texture.wrapMode = TextureWrapMode.Clamp;
                     _spriteCache.Add(path, sprite);
                     return sprite;
@@ -54,11 +51,9 @@ namespace Cherry.Managers
 
         public void Dispose()
         {
-            _cancellationTokenSource.Cancel();
             foreach (var sprite in _spriteCache.Values)
             {
-                UnityEngine.Object.Destroy(sprite);
-                UnityEngine.Object.Destroy(sprite.texture);
+                SpriteFactory.Destroy(sprite);
             }
         }
     }
