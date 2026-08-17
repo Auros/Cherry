@@ -1,0 +1,134 @@
+name: Build
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v5
+
+      - name: Setup dotnet
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Read game version
+        id: game
+        run: |
+          manifest="Cherry/manifest.json"
+          if [ ! -f "$manifest" ]; then
+            echo "Missing $manifest" >&2
+            exit 1
+          fi
+
+          version="$(jq -er '.gameVersion | select(type == "string" and length > 0)' "$manifest")"
+          if ! grep -Fq "BS$version" Cherry/Cherry.csproj; then
+            echo "Cherry.csproj does not define a build platform for Beat Saber $version" >&2
+            exit 1
+          fi
+
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Checkout stripped dlls
+        uses: actions/checkout@v5
+        with:
+          repository: ScoreSaber/pc-ci-stripped
+          ssh-key: ${{ secrets.CI_SSH_KEY }}
+          path: Stripped
+          sparse-checkout: |
+            Versions/${{ steps.game.outputs.version }}
+          sparse-checkout-cone-mode: false
+
+      - name: Prepare game references
+        run: |
+          source="Stripped/Versions/${{ steps.game.outputs.version }}"
+          if [ ! -d "$source" ] || [ -z "$(find "$source" -mindepth 1 -print -quit)" ]; then
+            echo "Stripped references are missing for Beat Saber ${{ steps.game.outputs.version }}" >&2
+            exit 1
+          fi
+
+          mv "$source" Refs
+          for directory in "Beat Saber_Data/Managed" Plugins Libs; do
+            if [ ! -d "Refs/$directory" ]; then
+              echo "Stripped references are missing Refs/$directory" >&2
+              exit 1
+            fi
+          done
+
+      - name: Acquire mod references
+        shell: pwsh
+        run: |
+          $gameVersion = "${{ steps.game.outputs.version }}"
+          $manifest = Get-Content "Cherry/manifest.json" -Raw | ConvertFrom-Json
+          $dependencies = @($manifest.dependsOn.PSObject.Properties.Name)
+          $response = Invoke-RestMethod -Uri "https://beatmods.com/api/mods?gameVersion=$gameVersion&status=verified"
+
+          foreach ($name in $dependencies) {
+            $entry = $response.mods | Where-Object { $_.mod.name -eq $name } | Select-Object -First 1
+            if ($null -eq $entry) {
+              throw "No verified version of '$name' exists on BeatMods for Beat Saber $gameVersion"
+            }
+
+            $version = $entry.latest
+            Invoke-WebRequest -Uri "https://beatmods.com/cdn/mod/$($version.zipHash).zip" -OutFile "$name.zip"
+            Expand-Archive -LiteralPath "$name.zip" -DestinationPath Refs -Force
+          }
+
+      - name: Verify build references
+        run: |
+          references=(
+            "Refs/Beat Saber_Data/Managed/Main.dll"
+            "Refs/Beat Saber_Data/Managed/IPA.Loader.dll"
+            "Refs/Plugins/BSML.dll"
+            "Refs/Plugins/SiraUtil.dll"
+            "Refs/Plugins/SongCore.dll"
+            "Refs/Libs/CatCore.dll"
+          )
+
+          for reference in "${references[@]}"; do
+            if [ ! -f "$reference" ]; then
+              echo "Required build reference is missing: $reference" >&2
+              exit 1
+            fi
+          done
+
+      - name: Build
+        env:
+          FrameworkPathOverride: /usr/lib/mono/4.8-api
+        run: |
+          dotnet build Cherry.sln \
+            --configuration Release \
+            -p:Platform="BS${{ steps.game.outputs.version }}" \
+            -p:CherryTargetVersion="${{ steps.game.outputs.version }}" \
+            -p:LocalRefsDir="${{ github.workspace }}/Refs" \
+            -p:GameReferences="${{ github.workspace }}/Refs" \
+            -p:DisableCopyToGame=True \
+            -p:DisableZipRelease=False
+
+      - name: Find artifact
+        id: artifact
+        run: |
+          output="Cherry/bin/${{ steps.game.outputs.version }}/Release"
+          artifact="$(find "$output" -path '*/zip/*.zip' -type f | sort | head -n 1)"
+          if [ -z "$artifact" ]; then
+            echo "No distributable ZIP was produced under $output" >&2
+            find "$output" -maxdepth 4 -type f -print 2>/dev/null | sort >&2
+            exit 1
+          fi
+
+          echo "path=$artifact" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: Cherry-bs${{ steps.game.outputs.version }}
+          path: ${{ steps.artifact.outputs.path }}
+          if-no-files-found: error
