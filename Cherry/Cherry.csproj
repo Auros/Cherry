@@ -114,6 +114,9 @@
 			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\HMRendering.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
+		<Reference Include="netstandard">
+			<HintPath>$(GameReferences)\Beat Saber_Data\Managed\netstandard.dll</HintPath>
+		</Reference>
 		<Reference Include="Newtonsoft.Json">
 			<HintPath>$(BeatSaberDir)\Libs\Newtonsoft.Json.dll</HintPath>
 			<Private>False</Private>
