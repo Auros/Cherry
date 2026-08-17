@@ -27,6 +27,7 @@ namespace Cherry.Managers
             {
                 _siraLog.Debug($"Fetching map with key '{key}'.");
                 var webResponse = await _httpService.GetAsync($"https://api.beatsaver.com/maps/id/{key}", cancellationToken: cancellationToken).ConfigureAwait(false);
+                _siraLog.Info("HELLO :D");
                 if (!webResponse.Successful)
                 {
                     _siraLog.Warn(webResponse.Code);
