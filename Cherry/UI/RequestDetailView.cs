@@ -4,7 +4,6 @@ using Cherry.Interfaces;
 using Cherry.Models;
 using HMUI;
 using IPA.Loader;
-using IPA.Utilities;
 using Legato.Presentation;
 using SiraUtil.Zenject;
 using System;
@@ -18,8 +17,6 @@ namespace Cherry.UI
 {
     internal class RequestDetailView
     {
-        internal static readonly FieldAccessor<ImageView, float>.Accessor ImageSkew = FieldAccessor<ImageView, float>.GetAccessor("_skew");
-
         [UIComponent("cover-image")]
         protected readonly Image _coverImage = null!;
 

@@ -5,7 +5,6 @@ using Cherry.Interfaces;
 using Cherry.Managers;
 using Cherry.Models;
 using HMUI;
-using IPA.Utilities;
 using SiraUtil.Logging;
 using System;
 using System.Collections.Generic;
@@ -47,20 +46,6 @@ namespace Cherry.UI
         [UIComponent("request-queue-text")]
         protected readonly CurvedTextMeshPro requestQueueText = null!;
 
-        #endregion
-
-        #region Accessors
-
-        internal static readonly FieldAccessor<ImageView, float>.Accessor ImageSkew = FieldAccessor<ImageView, float>.GetAccessor("_skew");
-        internal static readonly FieldAccessor<ImageView, Color>.Accessor ImageColor0 = FieldAccessor<ImageView, Color>.GetAccessor("_color0");
-        internal static readonly FieldAccessor<ImageView, Color>.Accessor ImageColor1 = FieldAccessor<ImageView, Color>.GetAccessor("_color1");
-        internal static readonly FieldAccessor<TableView, ScrollView>.Accessor Scroller = FieldAccessor<TableView, ScrollView>.GetAccessor("_scrollView");
-        internal static readonly FieldAccessor<LevelListTableCell, Image>.Accessor CellCoverImage = FieldAccessor<LevelListTableCell, Image>.GetAccessor("_coverImage");
-        internal static readonly FieldAccessor<LevelListTableCell, TextMeshProUGUI>.Accessor SongNameText = FieldAccessor<LevelListTableCell, TextMeshProUGUI>.GetAccessor("_songNameText");
-        internal static readonly FieldAccessor<LevelListTableCell, TextMeshProUGUI>.Accessor SongAuthorText = FieldAccessor<LevelListTableCell, TextMeshProUGUI>.GetAccessor("_songAuthorText");
-        internal static readonly FieldAccessor<ScrollView, Button>.Accessor PageUpButton = FieldAccessor<ScrollView, Button>.GetAccessor("_pageUpButton");
-        internal static readonly FieldAccessor<ScrollView, Button>.Accessor PageDownButton = FieldAccessor<ScrollView, Button>.GetAccessor("_pageDownButton");
-        internal static readonly FieldAccessor<LevelListTableCell, Image>.Accessor CellBackground = FieldAccessor<LevelListTableCell, Image>.GetAccessor("_backgroundImage");
         #endregion
 
         private bool _isDirty;
@@ -141,10 +126,10 @@ namespace Cherry.UI
         protected void Parsed()
         {
             var tableView = requestList.GetTableView();
-            var scroller = Scroller(ref tableView);
+            var scroller = tableView._scrollView;
 
-            PageUpButton(ref scroller) = upButton;
-            PageDownButton(ref scroller) = downButton;
+            scroller._pageUpButton = upButton;
+            scroller._pageDownButton = downButton;
 
             var inst = requestList.GetSongListTableCellPrefab();
             if (inst == null)
@@ -152,20 +137,18 @@ namespace Cherry.UI
                 inst = requestList.GetTableCell();
                 requestList.SetSongListTableCellPrefab(inst);
             }
-            var bg = CellBackground(ref inst);
-            var cbg = CellCoverImage(ref inst);
-            var cellBackground = (bg as ImageView)!;
-            var cellCoverImage = (cbg as ImageView)!;
+            var cellBackground = (ImageView)inst._backgroundImage;
+            var cellCoverImage = (ImageView)inst._coverImage;
 
-            ImageSkew(ref cellBackground) = 0f;
-            ImageSkew(ref cellCoverImage) = 0f;
+            cellBackground._skew = 0f;
+            cellCoverImage._skew = 0f;
             cellCoverImage.SetVerticesDirty();
             cellBackground.SetVerticesDirty();
             upButton.SetSkew(0f);
             downButton.SetSkew(0f);
 
-            var songNameText = SongNameText(ref inst);
-            var authorNameText = SongAuthorText(ref inst);
+            var songNameText = inst._songNameText;
+            var authorNameText = inst._songAuthorText;
             songNameText.fontSizeMin = 1f;
             songNameText.fontSizeMax = 4f;
             songNameText.enableAutoSizing = true;
@@ -174,7 +157,7 @@ namespace Cherry.UI
             authorNameText.fontStyle = FontStyles.Normal;
 
             ImageView topBackground = (topPanelBackground.GetBackground() as ImageView)!;
-            ImageSkew(ref topBackground) = 0f;
+            topBackground._skew = 0f;
             topBackground.color = Color.white;
             topBackground.color0 = _config.QueueOpened ? _openColor0 : _closedColor0;
             topBackground.color1 = _config.QueueOpened ? _openColor1 : _closedColor1;
@@ -480,8 +463,8 @@ namespace Cherry.UI
             _requestPanelView.SetQueueButtonColor(_config.QueueOpened ? Color.green : Color.red);
             _requestPanelView.SetQueueButtonText(_config.QueueOpened ? "Close Queue" : "Open Queue");
 
-            var startColor0 = ImageColor0(ref topBackground);
-            var startColor1 = ImageColor1(ref topBackground);
+            var startColor0 = topBackground._color0;
+            var startColor1 = topBackground._color1;
             var endColor0 = _config.QueueOpened ? _openColor0 : _closedColor0;
             var endColor1 = _config.QueueOpened ? _openColor1 : _closedColor1;
 

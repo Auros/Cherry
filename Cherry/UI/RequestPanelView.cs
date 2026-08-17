@@ -59,8 +59,8 @@ namespace Cherry.UI
 
             _defaultPlayButtonBorderColor = _playButtonBorder.color;
             _defaultPlayButtonOutlineColor = _playButtonOutline.color;
-            _defaultPlayButtonBGColorLeftTop = Utilities.ImageViewColor0(ref _playButtonBackground);
-            _defaultPlayButtonBGColorLeftBottom = Utilities.ImageViewColor1(ref _playButtonBackground);
+            _defaultPlayButtonBGColorLeftTop = _playButtonBackground._color0;
+            _defaultPlayButtonBGColorLeftBottom = _playButtonBackground._color1;
 
             _playButton.selectionStateDidChangeEvent += SelectionChanged;
         }

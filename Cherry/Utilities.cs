@@ -1,5 +1,4 @@
 ﻿using HMUI;
-using IPA.Utilities;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.UI;
@@ -8,10 +7,6 @@ namespace Cherry
 {
     internal static class Utilities
     {
-        internal static readonly FieldAccessor<ImageView, float>.Accessor ImageSkew = FieldAccessor<ImageView, float>.GetAccessor("_skew");
-        internal static readonly FieldAccessor<ImageView, Color>.Accessor ImageViewColor0 = FieldAccessor<ImageView, Color>.GetAccessor("_color0");
-        internal static readonly FieldAccessor<ImageView, Color>.Accessor ImageViewColor1 = FieldAccessor<ImageView, Color>.GetAccessor("_color1");
-        
         private static readonly Gradient _colorGradient = new Gradient()
         {
             colorKeys = new GradientColorKey[]
@@ -38,7 +33,7 @@ namespace Cherry
 
         public static void SetSkew(this ImageView imageView, float skew)
         {
-            ImageSkew(ref imageView) = skew;
+            imageView._skew = skew;
             imageView.SetVerticesDirty();
         }
 
@@ -46,9 +41,8 @@ namespace Cherry
         {
             foreach (var imageView in button.GetComponentsInChildren<ImageView>(true))
             {
-                var image = imageView;
-                ImageSkew(ref image) = skew;
-                image.SetVerticesDirty();
+                imageView._skew = skew;
+                imageView.SetVerticesDirty();
             }
         }
 

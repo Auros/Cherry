@@ -88,6 +88,11 @@
 			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\BeatmapCore.dll</HintPath>
 			<Private>False</Private>
 		</Reference>
+		<Reference Include="BeatSaber.ViewSystem" Condition="Exists('$(BeatSaberDir)\Beat Saber_Data\Managed\BeatSaber.ViewSystem.dll')">
+			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\BeatSaber.ViewSystem.dll</HintPath>
+			<Private>False</Private>
+			<Publicize>true</Publicize>
+		</Reference>
 		<Reference Include="BSML">
 			<HintPath>$(BeatSaberDir)\Plugins\BSML.dll</HintPath>
 			<Private>False</Private>
@@ -172,6 +177,7 @@
 		<Reference Include="Main">
 			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\Main.dll</HintPath>
 			<Private>False</Private>
+			<Publicize>true</Publicize>
 		</Reference>
 		<Reference Include="BeatSaber.Settings" Condition="Exists('$(BeatSaberDir)\Beat Saber_Data\Managed\BeatSaber.Settings.dll')">
 			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\BeatSaber.Settings.dll</HintPath>
@@ -184,6 +190,7 @@
 		<Reference Include="HMUI">
 			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\HMUI.dll</HintPath>
 			<Private>False</Private>
+			<Publicize>true</Publicize>
 		</Reference>
 		<Reference Include="IPA.Loader">
 			<HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\IPA.Loader.dll</HintPath>
@@ -224,6 +231,7 @@
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
+		<PackageReference Include="BepInEx.AssemblyPublicizer.MSBuild" PrivateAssets="all" />
 		<PackageReference Include="LegatoBS" PrivateAssets="all" />
 	</ItemGroup>
 </Project>

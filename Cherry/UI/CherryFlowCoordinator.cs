@@ -1,6 +1,5 @@
 ﻿using BeatSaberMarkupLanguage;
 using HMUI;
-using IPA.Utilities;
 using SiraUtil.Logging;
 using Zenject;
 
@@ -16,16 +15,13 @@ namespace Cherry.UI
         private OpenSettingsView _openSettingsView = null!;
         private CherryRequestView _cherryRequestView = null!;
         private CherrySettingsView _cherrySettingsView = null!;
-        private FlowCoordinator _parentFlowCoordinator = null!;
+        private FlowCoordinator _presentingFlowCoordinator = null!;
         private MainFlowCoordinator _mainFlowCoordinator = null!;
 
         private LevelSearchViewController _levelSearchViewController = null!;
         private SelectLevelCategoryViewController _selectLevelCategoryViewController = null!;
         private LevelFilteringNavigationController _levelFilteringNavigationController = null!;
         private LevelCollectionNavigationController _levelCollectionNavigationController = null!;
-
-        private static readonly FieldAccessor<SelectLevelCategoryViewController, IconSegmentedControl>.Accessor SegmentedControl = FieldAccessor<SelectLevelCategoryViewController, IconSegmentedControl>.GetAccessor("_levelFilterCategoryIconSegmentedControl");
-        private static readonly FieldAccessor<SelectLevelCategoryViewController, SelectLevelCategoryViewController.LevelCategoryInfo[]>.Accessor Categories = FieldAccessor<SelectLevelCategoryViewController, SelectLevelCategoryViewController.LevelCategoryInfo[]>.GetAccessor("_levelCategoryInfos");
 
         [Inject]
         protected void Construct(SiraLog siraLog, ButtonManager buttonManager, OpenSettingsView openSettingsView, CherryRequestView cherryRequestView, CherrySettingsView cherrySettingsView, MainFlowCoordinator mainFlowCoordinator, LevelSearchViewController levelSearchViewController,
@@ -43,7 +39,7 @@ namespace Cherry.UI
             _levelCollectionNavigationController = levelCollectionNavigationController;
         }
 
-        protected override void DidActivate(bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling)
+        public override void DidActivate(bool firstActivation, bool addedToHierarchy, bool screenSystemEnabling)
         {
             if (firstActivation)
             {
@@ -73,14 +69,14 @@ namespace Cherry.UI
 
         private void SelectLevel(BeatmapLevel level)
         {
-            _parentFlowCoordinator.DismissFlowCoordinator(this, () =>
+            _presentingFlowCoordinator.DismissFlowCoordinator(this, () =>
             {
-                var categories = Categories(ref _selectLevelCategoryViewController);
+                var categories = _selectLevelCategoryViewController._levelCategoryInfos;
                 for (int i = 0; i < categories.Length; i++)
                 {
                     if (categories[i].levelCategory == SelectLevelCategoryViewController.LevelCategory.All)
                     {
-                        var control = SegmentedControl(ref _selectLevelCategoryViewController);
+                        var control = _selectLevelCategoryViewController._levelFilterCategoryIconSegmentedControl;
                         control.SelectCellWithNumber(i);
 
                         _levelFilteringNavigationController.UpdateSecondChildControllerContent(SelectLevelCategoryViewController.LevelCategory.All);
@@ -100,13 +96,13 @@ namespace Cherry.UI
 
         private void CherryWasClicked()
         {
-            _parentFlowCoordinator = _mainFlowCoordinator.YoungestChildFlowCoordinatorOrSelf();
-            _parentFlowCoordinator.PresentFlowCoordinator(this, animationDirection: ViewController.AnimationDirection.Vertical);
+            _presentingFlowCoordinator = _mainFlowCoordinator.YoungestChildFlowCoordinatorOrSelf();
+            _presentingFlowCoordinator.PresentFlowCoordinator(this, animationDirection: ViewController.AnimationDirection.Vertical);
         }
 
-        protected override void BackButtonWasPressed(ViewController topViewController)
+        public override void BackButtonWasPressed(ViewController topViewController)
         {
-            _parentFlowCoordinator.DismissFlowCoordinator(this);
+            _presentingFlowCoordinator.DismissFlowCoordinator(this);
         }
     }
 }
